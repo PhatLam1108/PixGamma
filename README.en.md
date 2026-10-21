@@ -228,8 +228,10 @@ PixGamma (Swift package)
 
 | | Role |
 |---|---|
-| **Steven Lam** ([@PhatLam1108](https://github.com/PhatLam1108)) | Product owner: requirements, image-quality direction, real-world testing |
-| **Claude** ([Anthropic](https://www.anthropic.com/claude)) | AI developer: architecture, code, model conversion and training, tests and docs via [Claude Code](https://claude.com/claude-code) |
+| **Steven Lam** ([@PhatLam1108](https://github.com/PhatLam1108)) | Author: planning and product direction, architecture design, choosing, converting and training the AI models, image-quality direction, real-world testing and releases |
+| **Claude** ([Anthropic](https://www.anthropic.com/claude)) | Writes the code to Steven Lam's plan and architecture, via [Claude Code](https://claude.com/claude-code) |
+| **Gemini** ([Google](https://deepmind.google/models/gemini/)) | UI refinement, via [Antigravity](https://antigravity.google) (Gemini 3.8, Gemini 4 Argon) |
+| **Codex** ([OpenAI](https://openai.com/codex)) | Code review, feedback on errors and bugs |
 
 Commits written with Claude carry a `Co-Authored-By: Claude` line.
 

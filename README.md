@@ -239,8 +239,10 @@ PixGamma dùng các model mã nguồn mở, đã chuyển sang Core ML:
 
 | | Vai trò |
 |---|---|
-| **Steven Lam** ([@PhatLam1108](https://github.com/PhatLam1108)) | Chủ sản phẩm: yêu cầu, định hướng chất lượng ảnh, dùng thử thực tế |
-| **Claude** ([Anthropic](https://www.anthropic.com/claude)) | Lập trình viên AI: kiến trúc, viết code, chuyển và huấn luyện model, test và tài liệu qua [Claude Code](https://claude.com/claude-code) |
+| **Steven Lam** ([@PhatLam1108](https://github.com/PhatLam1108)) | Tác giả: lên kế hoạch và định hướng sản phẩm, thiết kế kiến trúc, chọn, chuyển đổi và huấn luyện model AI, định hướng chất lượng ảnh, kiểm thử thực tế và phát hành |
+| **Claude** ([Anthropic](https://www.anthropic.com/claude)) | Viết code theo kế hoạch và kiến trúc của Steven Lam, qua [Claude Code](https://claude.com/claude-code) |
+| **Gemini** ([Google](https://deepmind.google/models/gemini/)) | Chỉnh giao diện, qua [Antigravity](https://antigravity.google) (Gemini 3.8, Gemini 4 Argon) |
+| **Codex** ([OpenAI](https://openai.com/codex)) | Review code, góp ý về lỗi và bug |
 
 Các commit viết cùng Claude có dòng `Co-Authored-By: Claude`.
 

@@ -20,13 +20,11 @@ final class UpdateController: ObservableObject {
     /// Menu command: always shows the sheet.
     func checkNow() {
         showing = true
-        guard hasToken else { phase = .needToken; return }
         Task { await check(silent: false) }
     }
 
     /// At launch: once a day, quietly; the sheet only opens when there is an update.
     func checkOnLaunch() {
-        guard hasToken else { return }
         let last = UserDefaults.standard.double(forKey: lastCheckKey)
         guard Date().timeIntervalSince1970 - last > 24 * 3600 else { return }
         Task { await check(silent: true) }
@@ -38,9 +36,12 @@ final class UpdateController: ObservableObject {
         Task { await check(silent: false) }
     }
 
+    /// The repo is public, so a token is optional: it only lifts GitHub's anonymous rate limit.
+    func enterToken() { phase = .needToken }
+
     func forgetToken() {
         Updater.setToken(nil)
-        phase = .needToken
+        checkNow()
     }
 
     private func check(silent: Bool) async {
@@ -100,8 +101,12 @@ struct UpdateSheet: View {
             }
             content
             HStack {
-                if updates.hasToken, updates.phase != .needToken {
-                    Button("Xoá token") { updates.forgetToken() }.buttonStyle(.link).font(.system(size: 12))
+                if updates.phase != .needToken {
+                    if updates.hasToken {
+                        Button("Xoá token") { updates.forgetToken() }.buttonStyle(.link).font(.system(size: 12))
+                    } else if case .failed = updates.phase {
+                        Button("Dùng token GitHub…") { updates.enterToken() }.buttonStyle(.link).font(.system(size: 12))
+                    }
                 }
                 Spacer()
                 actions
@@ -121,9 +126,9 @@ struct UpdateSheet: View {
             HStack(spacing: 8) { ProgressView().controlSize(.small); Text("Đang kiểm tra bản mới…") }
         case .needToken:
             VStack(alignment: .leading, spacing: 8) {
-                Text("Repo Pixora là riêng tư, nên app cần một token GitHub chỉ đọc để xem và tải bản mới. Token được cất trong Keychain của máy này.")
+                Text("Không bắt buộc. Repo Pixora công khai nên app kiểm tra được mà không cần token; token chỉ nâng giới hạn của GitHub từ 60 lên 5.000 lần mỗi giờ. Token được cất trong Keychain của máy này.")
                     .font(.system(size: 12)).foregroundStyle(Theme.textSecondary).fixedSize(horizontal: false, vertical: true)
-                Text("Tạo token: Fine-grained token → Repository access: chỉ chọn Pixora → Permissions: Contents = Read-only.")
+                Text("Tạo token: Fine-grained token → Repository access: Public repositories (read-only), không cần thêm quyền nào.")
                     .font(.system(size: 12)).foregroundStyle(Theme.textSecondary).fixedSize(horizontal: false, vertical: true)
                 Link("Mở trang tạo token trên GitHub", destination: Updater.tokenHelpURL).font(.system(size: 12))
                 SecureField("github_pat_…", text: $token).textFieldStyle(.roundedBorder)
@@ -160,7 +165,7 @@ struct UpdateSheet: View {
     @ViewBuilder private var actions: some View {
         switch updates.phase {
         case .needToken:
-            Button("Huỷ") { updates.showing = false }
+            Button("Quay lại") { updates.checkNow() }
             Button("Lưu và kiểm tra") { updates.saveToken(token); token = "" }
                 .keyboardShortcut(.defaultAction).disabled(token.trimmingCharacters(in: .whitespaces).isEmpty)
         case .available(let r):

@@ -58,13 +58,13 @@ xattr -dr com.apple.quarantine /Applications/Pixora.app
 
 Pixora tự kiểm tra bản mới mỗi ngày một lần; kiểm tra ngay ở menu **Pixora → Kiểm tra cập nhật…** Khi có bản mới, app hiện ghi chú phát hành, tải file DMG, kiểm tra mã SHA-256, thay app rồi tự mở lại.
 
-Lần đầu app cần một **token GitHub chỉ đọc**, cất trong Keychain của máy:
+Repo Pixora công khai nên **không cần token GitHub**. Không có token, GitHub cho mỗi địa chỉ IP 60 lần gọi mỗi giờ, thừa cho việc kiểm tra cập nhật. Nếu app báo hết lượt (vd nhiều máy chung một mạng), có thể dùng thêm một token để có 5.000 lượt mỗi giờ:
 
 1. Mở [trang tạo token](https://github.com/settings/personal-access-tokens/new) (Fine-grained token).
-2. **Repository access**: chỉ chọn repo Pixora. **Permissions → Contents**: Read-only.
-3. Dán token vào hộp thoại cập nhật của app.
+2. **Repository access**: Public repositories (read-only); không cần thêm quyền nào.
+3. Trong hộp thoại cập nhật báo lỗi, bấm **Dùng token GitHub…** rồi dán token. Token được cất trong Keychain của máy.
 
-Từ Terminal: `pixora update` (kiểm tra), `pixora update --install` (cài, cần đóng app trước), `pixora update --token <token>` (lưu token). Biến `PIXORA_GITHUB_TOKEN` dùng thay Keychain cho script.
+Từ Terminal: `pixora update` (kiểm tra), `pixora update --install` (cài, cần đóng app trước), `pixora update --token <token>` (lưu token, không bắt buộc). Biến `PIXORA_GITHUB_TOKEN` dùng thay Keychain cho script.
 
 ### Chế độ Recover (tùy chọn)
 
@@ -167,7 +167,8 @@ curl --data-binary @anh.jpg "http://127.0.0.1:8765/v1/upscale?mode=std&scale=2&f
 | macOS không cho mở, báo "bị hỏng" | Chạy `xattr -dr com.apple.quarantine /Applications/Pixora.app` rồi mở lại |
 | `pixora: command not found` | Bấm đúp **Cài lệnh pixora (CLI).command** trong DMG, mở Terminal mới |
 | Không thấy thẻ Recover | Chưa cài model Recover, xem mục Chế độ Recover |
-| Cập nhật báo "Token không đọc được repo Pixora" | Token cần quyền Contents: Read-only cho đúng repo Pixora; tạo lại rồi dán vào hộp thoại cập nhật |
+| Cập nhật báo "GitHub giới hạn 60 lần kiểm tra mỗi giờ" | Chờ tới giờ được báo, hoặc bấm **Dùng token GitHub…** và dán một token (xem [Tự cập nhật](#tự-cập-nhật)) |
+| Cập nhật báo "Token GitHub đã lưu không hợp lệ" | Bấm **Xoá token** trong hộp thoại cập nhật (repo công khai không cần token), hoặc `PIXORA_GITHUB_TOKEN` đang đặt sai: bỏ biến này |
 | Lần chạy đầu chậm hơn hẳn | Core ML compile model cho máy ở lần đầu (vài chục giây), các lần sau nhanh |
 | Máy chậm khi chạy Recover | Recover dùng nhiều RAM GPU; đóng app nặng khác (máy ảo, trình duyệt nhiều tab) |
 

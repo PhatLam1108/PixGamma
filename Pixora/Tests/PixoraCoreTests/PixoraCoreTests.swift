@@ -97,6 +97,31 @@ final class PixoraCoreTests: XCTestCase {
         XCTAssertNil(old.dmg, "a release without a DMG cannot auto-update")
     }
 
+    func testUpdaterTokenIsOptional() throws {
+        let url = URL(string: "https://api.github.com/repos/x/y/releases/latest")!
+        XCTAssertNil(Updater.request(url, accept: "a", token: nil).value(forHTTPHeaderField: "Authorization"))
+        XCTAssertNil(Updater.request(url, accept: "a", token: "").value(forHTTPHeaderField: "Authorization"))
+        XCTAssertEqual(Updater.request(url, accept: "a", token: "t").value(forHTTPHeaderField: "Authorization"), "Bearer t")
+
+        func status(_ code: Int, _ headers: [String: String] = [:]) throws {
+            try Updater.check(HTTPURLResponse(url: url, statusCode: code, httpVersion: nil, headerFields: headers))
+        }
+        XCTAssertNoThrow(try status(200))
+        let limited = ["x-ratelimit-remaining": "0", "x-ratelimit-reset": "1800000000"]
+        for code in [403, 429] {
+            XCTAssertThrowsError(try status(code, limited)) { e in
+                guard case Updater.UpdateError.rateLimited(let reset) = e else { return XCTFail("\(e)") }
+                XCTAssertEqual(reset, Date(timeIntervalSince1970: 1_800_000_000))
+            }
+        }
+        XCTAssertThrowsError(try status(403, ["x-ratelimit-remaining": "12"])) { e in
+            guard case Updater.UpdateError.network = e else { return XCTFail("\(e)") }
+        }
+        XCTAssertThrowsError(try status(401)) { e in
+            guard case Updater.UpdateError.unauthorized = e else { return XCTFail("\(e)") }
+        }
+    }
+
     /// End-to-end install from a local DMG into a temporary folder:
     /// PIXORA_TEST_DMG=build/Pixora-<v>.dmg swift test --filter testUpdaterInstallsFromDMG
     func testUpdaterInstallsFromDMG() throws {

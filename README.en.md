@@ -58,13 +58,13 @@ xattr -dr com.apple.quarantine /Applications/Pixora.app
 
 Pixora checks for a new version once a day; check now from **Pixora → Kiểm tra cập nhật…** (Check for updates). When one is available the app shows the release notes, downloads the DMG, verifies its SHA-256, replaces itself and relaunches.
 
-The first time, the app needs a **read-only GitHub token**, stored in this Mac's Keychain:
+The Pixora repository is public, so **no GitHub token is needed**. Without one, GitHub allows 60 requests an hour per IP address, plenty for update checks. If the app says the limit is used up (for example many Macs behind one network), you can add a token to get 5,000 an hour:
 
 1. Open the [token page](https://github.com/settings/personal-access-tokens/new) (fine-grained token).
-2. **Repository access**: only the Pixora repository. **Permissions → Contents**: Read-only.
-3. Paste it into the app's update dialog.
+2. **Repository access**: Public repositories (read-only); no extra permissions.
+3. In the update dialog showing the error, click **Dùng token GitHub…** (Use a GitHub token) and paste it. It is stored in this Mac's Keychain.
 
-From Terminal: `pixora update` (check), `pixora update --install` (install; quit the app first), `pixora update --token <token>` (save the token). `PIXORA_GITHUB_TOKEN` overrides the Keychain for scripts.
+From Terminal: `pixora update` (check), `pixora update --install` (install; quit the app first), `pixora update --token <token>` (save an optional token). `PIXORA_GITHUB_TOKEN` overrides the Keychain for scripts.
 
 ### Recover mode (optional)
 
@@ -167,7 +167,8 @@ Endpoints: `/health`, `/v1/models`, `/v1/analyze`, `/v1/upscale`. `/v1/upscale` 
 | macOS won't open it, says "damaged" | Run `xattr -dr com.apple.quarantine /Applications/Pixora.app`, then reopen |
 | `pixora: command not found` | Double-click **Cài lệnh pixora (CLI).command** in the DMG, open a new Terminal |
 | No Recover card | Recover models not installed, see Recover mode |
-| Update says the token cannot read the Pixora repo | The token needs Contents: Read-only on the Pixora repository; create a new one and paste it into the update dialog |
+| Update says GitHub allows 60 checks an hour | Wait until the time shown, or click **Dùng token GitHub…** and paste a token (see [Automatic updates](#automatic-updates)) |
+| Update says the saved GitHub token is invalid | Click **Xoá token** (Remove token) in the update dialog, since the public repo needs none, or unset a wrong `PIXORA_GITHUB_TOKEN` |
 | First run much slower | Core ML compiles models for this Mac on first use (tens of seconds); later runs are fast |
 | Mac slows down during Recover | Recover uses a lot of GPU memory; close other heavy apps (VMs, many browser tabs) |
 

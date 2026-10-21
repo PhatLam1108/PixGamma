@@ -237,9 +237,9 @@ struct Models: ParsableCommand {
 struct Update: ParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "Kiểm tra và cài bản Pixora mới từ GitHub Releases.",
-        discussion: "Repo riêng tư nên cần token GitHub chỉ đọc (Contents: Read-only cho repo Pixora): lưu một lần bằng --token, hoặc đặt biến PIXORA_GITHUB_TOKEN.")
+        discussion: "Repo Pixora công khai nên không cần token. Nếu GitHub báo hết lượt (60 lần mỗi giờ cho mỗi IP), lưu một token GitHub bằng --token hoặc đặt biến PIXORA_GITHUB_TOKEN để có 5.000 lượt mỗi giờ.")
 
-    @Option(help: "Lưu token GitHub vào Keychain rồi kiểm tra.") var token: String?
+    @Option(help: "Không bắt buộc: lưu token GitHub vào Keychain (nâng giới hạn lượt gọi) rồi kiểm tra.") var token: String?
     @Flag(help: "Tải, kiểm tra SHA-256 và cài bản mới vào Pixora.app đang chứa lệnh này.") var install = false
 
     func run() throws {

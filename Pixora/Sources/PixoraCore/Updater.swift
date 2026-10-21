@@ -2,10 +2,11 @@ import CryptoKit
 import Foundation
 import Security
 
-/// Self-update from the GitHub releases of the (private) Pixora repository.
+/// Self-update from the GitHub releases of the public Pixora repository.
 ///
-/// The repo is private, so reading releases needs a token: the user pastes a fine-grained,
-/// read-only token once and it is kept in the login Keychain. A release must carry
+/// No token is needed. One saved in the login Keychain (or `PIXORA_GITHUB_TOKEN`) is still
+/// sent when present, which lifts GitHub's unauthenticated limit of 60 requests an hour per
+/// IP address. A release must carry
 /// `Pixora-<version>.dmg` and `Pixora-<version>.dmg.sha256` (made by scripts/make_dmg.sh);
 /// the download is only installed when its SHA-256 matches and the app inside reports the
 /// release's version and Pixora's bundle id.
@@ -29,12 +30,14 @@ public enum Updater {
     }
 
     public enum UpdateError: LocalizedError {
-        case noToken, unauthorized, notFound, network(String), noInstaller(String), checksum, badBundle(String), notWritable(String)
+        case unauthorized, notFound, rateLimited(Date?), network(String), noInstaller(String), checksum, badBundle(String), notWritable(String)
         public var errorDescription: String? {
             switch self {
-            case .noToken: return "Chưa có token GitHub."
-            case .unauthorized: return "Token không hợp lệ hoặc đã hết hạn."
-            case .notFound: return "Token không đọc được repo Pixora (cần quyền Contents: Read-only cho repo này), hoặc repo chưa có bản phát hành."
+            case .unauthorized: return "Token GitHub đã lưu không hợp lệ hoặc đã hết hạn. Repo Pixora công khai nên không cần token: hãy xoá token rồi thử lại."
+            case .notFound: return "Không tìm thấy bản phát hành nào của Pixora trên GitHub."
+            case .rateLimited(let reset):
+                let when = reset.map { " Thử lại sau \($0.formatted(date: .omitted, time: .shortened))," } ?? " Thử lại sau ít phút,"
+                return "GitHub giới hạn 60 lần kiểm tra mỗi giờ cho mỗi địa chỉ IP khi không có token, và đã hết lượt.\(when) hoặc dùng một token GitHub (không cần quyền gì) để có 5.000 lượt mỗi giờ."
             case .network(let m): return "Không kết nối được GitHub: \(m)"
             case .noInstaller(let v): return "Bản \(v) chưa có file cài đặt .dmg."
             case .checksum: return "File tải về không khớp mã SHA-256, đã huỷ cài đặt."
@@ -88,10 +91,11 @@ public enum Updater {
 
     // MARK: GitHub
 
-    static func request(_ url: URL, accept: String, token: String) -> URLRequest {
+    /// Without a token the request is anonymous, which is enough for the public repo.
+    static func request(_ url: URL, accept: String, token: String?) -> URLRequest {
         var r = URLRequest(url: url)
         r.setValue(accept, forHTTPHeaderField: "Accept")
-        r.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        if let token, !token.isEmpty { r.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
         r.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
         r.setValue("Pixora/\(APIServer.version)", forHTTPHeaderField: "User-Agent")
         return r
@@ -99,18 +103,27 @@ public enum Updater {
 
     /// Latest published (non-draft, non-prerelease) release.
     public static func latest(token: String? = Updater.token) async throws -> Release {
-        guard let token else { throw UpdateError.noToken }
         let url = URL(string: "https://api.github.com/repos/\(repository)/releases/latest")!
         let data: Data, resp: URLResponse
         do { (data, resp) = try await URLSession.shared.data(for: request(url, accept: "application/vnd.github+json", token: token)) }
         catch { throw UpdateError.network(error.localizedDescription) }
-        switch (resp as? HTTPURLResponse)?.statusCode ?? 0 {
-        case 200: break
-        case 401: throw UpdateError.unauthorized
-        case 403, 404: throw UpdateError.notFound
-        case let c: throw UpdateError.network("HTTP \(c)")
-        }
+        try check(resp as? HTTPURLResponse)
         return try parseRelease(data)
+    }
+
+    /// Maps a GitHub API status to an `UpdateError`; 403/429 with no requests left is the rate limit.
+    static func check(_ resp: HTTPURLResponse?) throws {
+        let code = resp?.statusCode ?? 0
+        let exhausted = resp?.value(forHTTPHeaderField: "x-ratelimit-remaining") == "0"
+        switch code {
+        case 200: return
+        case 401: throw UpdateError.unauthorized
+        case 403 where exhausted, 429 where exhausted:
+            let reset = resp?.value(forHTTPHeaderField: "x-ratelimit-reset").flatMap(TimeInterval.init).map(Date.init(timeIntervalSince1970:))
+            throw UpdateError.rateLimited(reset)
+        case 404: throw UpdateError.notFound
+        default: throw UpdateError.network("HTTP \(code)")
+        }
     }
 
     public static func parseRelease(_ data: Data) throws -> Release {
@@ -130,7 +143,7 @@ public enum Updater {
     // MARK: Download
 
     /// Asset downloads redirect to a signed storage URL that rejects the GitHub token,
-    /// so the Authorization header is dropped on redirect.
+    /// so the Authorization header (if any) is dropped on redirect.
     private final class Delegate: NSObject, URLSessionTaskDelegate, URLSessionDownloadDelegate, @unchecked Sendable {
         let progress: @Sendable (Double) -> Void
         var continuation: CheckedContinuation<URL, Error>?
@@ -150,8 +163,7 @@ public enum Updater {
             // The file is deleted when this returns: move it somewhere we own first.
             let dest = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
             do {
-                let code = (downloadTask.response as? HTTPURLResponse)?.statusCode ?? 0
-                guard code == 200 else { throw UpdateError.network("HTTP \(code)") }
+                try Updater.check(downloadTask.response as? HTTPURLResponse)
                 try FileManager.default.moveItem(at: location, to: dest)
                 continuation?.resume(returning: dest)
             } catch { continuation?.resume(throwing: error) }
@@ -162,7 +174,7 @@ public enum Updater {
         }
     }
 
-    static func download(_ asset: Asset, token: String, progress: @escaping @Sendable (Double) -> Void) async throws -> URL {
+    static func download(_ asset: Asset, token: String?, progress: @escaping @Sendable (Double) -> Void) async throws -> URL {
         let delegate = Delegate(progress: progress)
         let session = URLSession(configuration: .ephemeral, delegate: delegate, delegateQueue: nil)
         defer { session.finishTasksAndInvalidate() }
@@ -187,7 +199,6 @@ public enum Updater {
     /// prepared installer; `relaunch` replaces `target` once this process has quit.
     public static func prepare(_ r: Release, token: String? = Updater.token,
                                progress: @escaping @Sendable (Double) -> Void) async throws -> PreparedUpdate {
-        guard let token else { throw UpdateError.noToken }
         guard let dmgAsset = r.dmg else { throw UpdateError.noInstaller(r.version) }
         guard let sumAsset = r.checksum else { throw UpdateError.badBundle("thiếu file \(dmgAsset.name).sha256") }
         let dmg = try await download(dmgAsset, token: token) { progress(0.9 * $0) }

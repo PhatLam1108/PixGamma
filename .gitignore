@@ -1,0 +1,43 @@
+# macOS
+.DS_Store
+
+# Swift / build output
+Pixora/.build/
+Pixora/build/
+*.xcodeproj/xcuserdata/
+
+# Core ML models are large; they are published as GitHub Release assets.
+# Rebuild them with tools/convert_models.py and tools/convert_extra.py.
+Pixora/Models/*.mlpackage
+Pixora/Models/*.mlmodelc/
+
+# Local test images (contain system sample images that must not be redistributed)
+Pixora/TestImages
+
+# Downloaded weights and third-party sources
+tools/weights/
+*.pth
+*.safetensors
+training/traiNNer-redux/
+training/datasets
+training/experiments
+training/tb_logger/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Local Claude Code skills and settings
+.claude/
+
+# Folders kept out of iCloud sync (".nosync" suffix) and their symlinks
+*.nosync
+Pixora/.build
+Pixora/build
+training/traiNNer-redux
+tools/weights
+training/*.log
+Pixora/Models/Recover
+generative/ml-stable-diffusion
+generative/*.log

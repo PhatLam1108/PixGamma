@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Pixora">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2B5FD9"/>
+      <stop offset="1" stop-color="#16244F"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#bg)"/>
+  <!-- low-resolution pixels on the left -->
+  <g fill="#FFFFFF">
+    <rect x="44" y="76" width="22" height="22" rx="3" opacity=".35"/>
+    <rect x="70" y="76" width="22" height="22" rx="3" opacity=".6"/>
+    <rect x="44" y="102" width="22" height="22" rx="3" opacity=".6"/>
+    <rect x="70" y="102" width="22" height="22" rx="3" opacity=".35"/>
+    <rect x="44" y="128" width="22" height="22" rx="3" opacity=".35"/>
+    <rect x="70" y="128" width="22" height="22" rx="3" opacity=".6"/>
+    <rect x="44" y="154" width="22" height="22" rx="3" opacity=".6"/>
+    <rect x="70" y="154" width="22" height="22" rx="3" opacity=".35"/>
+  </g>
+  <!-- smooth, restored shape on the right -->
+  <circle cx="160" cy="112" r="50" fill="#FFFFFF" opacity=".94"/>
+  <!-- sparkle -->
+  <path d="M170 150 L178 176 L204 184 L178 192 L170 218 L162 192 L136 184 L162 176 Z" fill="#FFD666"/>
+</svg>

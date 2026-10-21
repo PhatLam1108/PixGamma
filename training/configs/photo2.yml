@@ -1,0 +1,106 @@
+# Pixora Photo v2: Photo v1 thêm một lớp GAN nhẹ để tái tạo hạt mịn (vải áo thun, mặt phím, da)
+# mà loss trung thực (v1) làm phẳng mất. Giữ Charbonnier + LDL để không vẽ vân giả lên mảng phẳng;
+# GAN chỉ 0.05 (mẫu traiNNer 0.1), perceptual nhẹ, DISTS cao hơn v1 để ưu tiên kết cấu thật.
+# Vùng chữ trong app vẫn chạy bằng model trung thực (v1), không qua GAN.
+# Chạy từ training/traiNNer-redux:
+#   .venv/bin/python ../train_mps.py -opt ../configs/photo2.yml
+name: pixora_photo2
+scale: 4
+use_amp: false
+use_channels_last: false
+fast_matmul: false
+use_compile: false
+num_gpu: 0              # patch MPS: num_gpu 0 + TRAINNER_MPS=1 → chạy trên GPU Mac
+manual_seed: 2010
+
+datasets:
+  train:
+    name: photo
+    type: pairedimagedataset
+    dataroot_gt: [../datasets/photo1/train/hr, ../datasets/text_mix/hr]
+    dataroot_lq: [../datasets/photo1/train/lr, ../datasets/text_mix/lr]
+    lq_size: 64
+    use_hflip: true
+    use_rot: true
+    num_worker_per_gpu: 6
+    batch_size_per_gpu: 6
+    accum_iter: 1
+    prefetch_mode: ~
+  val:
+    name: photo_val
+    type: pairedimagedataset
+    dataroot_gt: [../datasets/photo1/val_small/hr]
+    dataroot_lq: [../datasets/photo1/val_small/lr]
+
+network_g:
+  type: dat_2
+
+network_d:
+  type: dunet
+
+path:
+  pretrain_network_g: experiments/pixora_photo1/models/net_g_ema_latest.safetensors
+  param_key_g: ~
+  strict_load_g: true
+  resume_state: ~
+
+train:
+  ema_decay: 0.999
+  ema_power: 0.75
+  grad_clip: true
+  grad_clip_max_norm: 100
+  optim_g:
+    type: AdamW
+    lr: !!float 1e-5
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  optim_d:
+    type: AdamW
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  scheduler:
+    type: MultiStepLR
+    milestones: [9000]
+    gamma: 0.5
+  total_iter: 12000
+  warmup_iter: 200
+  losses:
+    - type: charbonnierloss
+      loss_weight: 1.0
+    - type: mssimloss
+      loss_weight: 0.2
+    - type: ldlloss
+      loss_weight: 1.0
+    - type: ffloss
+      loss_weight: 0.3
+    - type: distsloss
+      loss_weight: 0.25
+    - type: perceptualloss
+      criterion: charbonnier
+      loss_weight: 0.02
+    - type: ganloss
+      gan_type: vanilla
+      loss_weight: 0.05
+
+val:
+  val_enabled: true
+  val_freq: 3000
+  save_img: true
+  tile_size: 0
+  metrics_enabled: true
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 4
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 4
+      test_y_channel: false
+
+logger:
+  print_freq: 100
+  save_checkpoint_freq: 3000
+  save_checkpoint_format: safetensors
+  use_tb_logger: false

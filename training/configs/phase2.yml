@@ -1,0 +1,103 @@
+# Pha 2 (GAN nhẹ + perceptual): tái tạo kết cấu thật (hạt nhám, sợi vải, da) mà vẫn neo vào ảnh gốc.
+# Chạy từ training/traiNNer-redux:
+#   .venv/bin/python ../train_mps.py -opt ../configs/phase2.yml
+name: pixora_phase2
+scale: 4
+use_amp: false          # AMP chỉ dành cho NVIDIA
+use_channels_last: false
+fast_matmul: false
+use_compile: false
+num_gpu: 0              # patch MPS: num_gpu 0 + TRAINNER_MPS=1 → chạy trên GPU Mac
+manual_seed: 1108
+
+datasets:
+  train:
+    name: trial
+    type: pairedimagedataset
+    dataroot_gt: [../datasets/main/train/hr]
+    dataroot_lq: [../datasets/main/train/lr]
+    lq_size: 64
+    use_hflip: true
+    use_rot: true
+    num_worker_per_gpu: 6
+    batch_size_per_gpu: 8
+    accum_iter: 1
+    prefetch_mode: ~
+  val:
+    name: trial_val
+    type: pairedimagedataset
+    dataroot_gt: [../datasets/main/val12/hr]
+    dataroot_lq: [../datasets/main/val12/lr]
+
+network_g:
+  type: realplksr
+  upsampler: pixelshuffle
+  layer_norm: false     # 4xNomosWebPhoto dùng GroupNorm
+
+network_d:
+  type: dunet
+
+path:
+  pretrain_network_g: ../../tools/weights/4xNomosWebPhoto_RealPLKSR.pth
+  param_key_g: ~
+  strict_load_g: true
+  resume_state: ~
+
+train:
+  ema_decay: 0.999
+  ema_power: 0.75
+  grad_clip: true
+  grad_clip_max_norm: 100
+  optim_g:
+    type: AdamW
+    lr: !!float 5e-5
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  optim_d:
+    type: AdamW
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  scheduler:
+    type: MultiStepLR
+    milestones: [100000]
+    gamma: 0.5
+  total_iter: 3000
+  warmup_iter: -1
+  losses:
+    - type: charbonnierloss      # neo màu và bố cục vào ảnh gốc
+      loss_weight: 1.0
+    - type: mssimloss
+      loss_weight: 0.2
+    - type: distsloss            # kết cấu giống ảnh thật (hạt, sợi, da)
+      loss_weight: 0.25
+    - type: perceptualloss
+      criterion: charbonnier
+      loss_weight: 0.03
+    - type: ldlloss              # chặn vệt giả do GAN
+      loss_weight: 1.0
+    - type: ganloss
+      gan_type: vanilla
+      loss_weight: 0.03
+
+val:
+  val_enabled: true
+  val_freq: 1000
+  save_img: true
+  tile_size: 0
+  metrics_enabled: true
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 4
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 4
+      test_y_channel: false
+
+logger:
+  print_freq: 50
+  save_checkpoint_freq: 1000
+  save_checkpoint_format: safetensors
+  use_tb_logger: false

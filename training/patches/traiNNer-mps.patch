@@ -1,0 +1,87 @@
+diff --git a/traiNNer/models/base_model.py b/traiNNer/models/base_model.py
+index 4c29130..5bb821d 100644
+--- a/traiNNer/models/base_model.py
++++ b/traiNNer/models/base_model.py
+@@ -44,7 +44,9 @@ class BaseModel:
+ 
+     def __init__(self, opt: ReduxOptions) -> None:
+         self.opt = opt
+-        self.device = torch.device("cuda" if opt.num_gpu != 0 else "cpu")
++        # Pixora patch: train on the Apple GPU when TRAINNER_MPS=1 and no CUDA GPU is configured.
++        use_mps = opt.num_gpu == 0 and os.environ.get("TRAINNER_MPS") == "1" and torch.backends.mps.is_available()
++        self.device = torch.device("cuda" if opt.num_gpu != 0 else ("mps" if use_mps else "cpu"))
+         self.is_train = opt.is_train
+         self.schedulers: list[LRScheduler] = []
+         self.optimizers: list[Optimizer] = []
+diff --git a/traiNNer/models/sr_model.py b/traiNNer/models/sr_model.py
+index de08055..d853cb8 100644
+--- a/traiNNer/models/sr_model.py
++++ b/traiNNer/models/sr_model.py
+@@ -972,7 +972,7 @@ class SRModel(BaseModel):
+             # tentative for out of GPU memory
+             self.lq = None
+             self.output = None
+-            torch.cuda.empty_cache()
++            (torch.cuda.empty_cache() if torch.cuda.is_available() else torch.mps.empty_cache())
+ 
+             save_img_dir = None
+ 
+diff --git a/traiNNer/utils/logger.py b/traiNNer/utils/logger.py
+index 87e6f3d..1165736 100644
+--- a/traiNNer/utils/logger.py
++++ b/traiNNer/utils/logger.py
+@@ -128,9 +128,10 @@ class MessageLogger:
+             message += f"[performance: {iter_time:.3f} it/s] [eta: {eta_str}] "
+ 
+         # peak VRAM
+-        message += (
+-            f"[peak VRAM: {torch.cuda.max_memory_allocated() / (1024**3):.2f} GB] "
+-        )
++        if torch.cuda.is_available():
++            message += f"[peak VRAM: {torch.cuda.max_memory_allocated() / (1024**3):.2f} GB] "
++        elif torch.backends.mps.is_available():  # Pixora patch
++            message += f"[MPS mem: {torch.mps.current_allocated_memory() / (1024**3):.2f} GB] "
+ 
+         # Log any additional variables (typically losses)
+         for k, v in log_vars.items():
+diff --git a/train.py b/train.py
+index 401ba71..e98606e 100644
+--- a/train.py
++++ b/train.py
+@@ -242,7 +242,7 @@ def load_resume_state(opt: ReduxOptions) -> Any | None:
+ def train_pipeline(root_path: str) -> None:
+     install()
+ 
+-    if not torch.cuda.is_available():
++    if not torch.cuda.is_available() and os.environ.get("TRAINNER_MPS") != "1":
+         raise RuntimeError(
+             "CUDA is not available. Please ensure that you have a GPU with CUDA support "
+             "and that you have installed the correct CUDA-enabled version of PyTorch. "
+@@ -260,7 +260,8 @@ def train_pipeline(root_path: str) -> None:
+     assert opt.path.experiments_root is not None
+     assert opt.path.log is not None
+ 
+-    torch.cuda.set_per_process_memory_fraction(fraction=1.0)
++    if torch.cuda.is_available():
++        torch.cuda.set_per_process_memory_fraction(fraction=1.0)
+ 
+     if opt.detect_anomaly:
+         torch.autograd.set_detect_anomaly(True)
+@@ -383,7 +384,7 @@ def train_pipeline(root_path: str) -> None:
+ 
+     # training
+     gc.collect()
+-    torch.cuda.empty_cache()
++    (torch.cuda.empty_cache() if torch.cuda.is_available() else torch.mps.empty_cache())
+ 
+     logger.info("Start training from epoch: %d, iter: %d.", start_epoch, current_iter)
+     data_timer, iter_timer = AvgTimer(), AvgTimer()
+@@ -437,7 +438,7 @@ def train_pipeline(root_path: str) -> None:
+                     if "cuda out of memory" in str_e:
+                         # Collect garbage (clear VRAM)
+                         gc.collect()
+-                        torch.cuda.empty_cache()
++                        (torch.cuda.empty_cache() if torch.cuda.is_available() else torch.mps.empty_cache())
+                         raise RuntimeError(
+                             "Ran out of VRAM during training. Reduce lq_size or batch_size_per_gpu and try again. Ensure that no other VRAM-intensive programs are running."
+                         ) from None

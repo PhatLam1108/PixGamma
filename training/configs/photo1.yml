@@ -1,0 +1,94 @@
+# Pixora Photo v1: model ảnh chụp riêng của Pixora. DAT2 fine-tune từ 4xBHI_dat2_real (Phhofm, CC-BY-4.0).
+# Dữ liệu: ảnh CC0/public domain đã lọc tranh vẽ và ảnh nhạy cảm, bỏ ảnh dùng để chấm (photo_exclude.txt);
+# một nửa ảnh nhỏ làm bằng chuỗi thu nhỏ + nén JPEG hai lần như ảnh web; thêm 2.500 ô chữ để không làm vỡ nét chữ.
+# Loss: giữ đúng điểm ảnh (Charbonnier, MS-SSIM), chặn vệt giả (LDL), giữ tần số cao (focal frequency),
+# kết cấu giống ảnh thật (DISTS), không GAN để model không bịa vân.
+#   prepare_dataset.py --input datasets/raw_cc0 --name photo1 --copies 2 --chain 0.5 --val 16 --exclude configs/photo_exclude.txt
+# Chạy từ training/traiNNer-redux:
+#   .venv/bin/python ../train_mps.py -opt ../configs/photo1.yml
+name: pixora_photo1
+scale: 4
+use_amp: false
+use_channels_last: false
+fast_matmul: false
+use_compile: false
+num_gpu: 0              # patch MPS: num_gpu 0 + TRAINNER_MPS=1 → chạy trên GPU Mac
+manual_seed: 1910
+
+datasets:
+  train:
+    name: photo
+    type: pairedimagedataset
+    dataroot_gt: [../datasets/photo1/train/hr, ../datasets/text_mix/hr]
+    dataroot_lq: [../datasets/photo1/train/lr, ../datasets/text_mix/lr]
+    lq_size: 64
+    use_hflip: true
+    use_rot: true
+    num_worker_per_gpu: 6
+    batch_size_per_gpu: 6
+    accum_iter: 1
+    prefetch_mode: ~
+  val:
+    name: photo_val
+    type: pairedimagedataset
+    dataroot_gt: [../datasets/photo1/val_small/hr]
+    dataroot_lq: [../datasets/photo1/val_small/lr]
+
+network_g:
+  type: dat_2
+
+path:
+  pretrain_network_g: ../../tools/weights/4xBHI_dat2_real.safetensors
+  param_key_g: ~
+  strict_load_g: true
+  resume_state: ~
+
+train:
+  ema_decay: 0.999
+  ema_power: 0.75
+  grad_clip: true
+  grad_clip_max_norm: 100
+  optim_g:
+    type: AdamW
+    lr: !!float 2e-5
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  scheduler:
+    type: MultiStepLR
+    milestones: [11000]
+    gamma: 0.5
+  total_iter: 15000
+  warmup_iter: 200
+  losses:
+    - type: charbonnierloss
+      loss_weight: 1.0
+    - type: mssimloss
+      loss_weight: 0.2
+    - type: ldlloss
+      loss_weight: 1.0
+    - type: ffloss
+      loss_weight: 0.3
+    - type: distsloss
+      loss_weight: 0.1
+
+val:
+  val_enabled: true
+  val_freq: 3000
+  save_img: true
+  tile_size: 0
+  metrics_enabled: true
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 4
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 4
+      test_y_channel: false
+
+logger:
+  print_freq: 100
+  save_checkpoint_freq: 3000
+  save_checkpoint_format: safetensors
+  use_tb_logger: false

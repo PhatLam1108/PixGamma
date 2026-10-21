@@ -1,0 +1,235 @@
+<p align="center">
+  <img src="docs/brand/logo.svg" width="96" alt="Pixora logo">
+</p>
+
+<h1 align="center">Pixora</h1>
+
+<p align="center">
+  AI image upscaling and restoration for the Mac. Runs fully on-device on the Apple Silicon GPU.<br>
+  Built for people who shoot and review laptops: real keycap legends, real texture, real colour.
+</p>
+
+<p align="center">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.2.1-1647C6">
+  <img alt="Platform" src="https://img.shields.io/badge/platform-macOS%2014%2B%20%C2%B7%20Apple%20Silicon-0B2A6F">
+  <img alt="Swift" src="https://img.shields.io/badge/Swift-6-F05138">
+  <img alt="UI" src="https://img.shields.io/badge/UI-SwiftUI%20%2B%20Core%20ML-1647C6">
+  <img alt="License" src="https://img.shields.io/badge/use-free%2C%20non--commercial-2E7D5B">
+</p>
+
+<p align="center">
+  <a href="README.md">Tiếng Việt</a> · <b>English</b> · <a href="CHANGELOG.md">Changelog (Vietnamese)</a> · <a href="../../releases/latest">Download latest</a>
+</p>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/hero-en-dark.webp">
+    <img src="docs/brand/hero-en-light.webp" width="100%" alt="Pixora: macaw and portrait before and after 4x upscaling">
+  </picture>
+</p>
+
+---
+
+## Overview
+
+Pixora takes a small, soft or compressed image and returns a 2x to 16x larger version with detail restored. It ships as a macOS app, a `pixora` CLI for batch work and a local HTTP API for publishing pipelines.
+
+Design principles:
+
+- **Images never leave the Mac.** Everything runs in Core ML on the Apple Silicon GPU. No account, no server, no uploads.
+- **No invented text.** Keycap legends, labels and banners are detected (Vietnamese included) and rebuilt by a dedicated text model. Text too small to rebuild correctly is kept faithful instead of being redrawn as different letters.
+- **Your photo stays your photo.** Colour, tone and facial identity are preserved; generated detail always has a strength control.
+
+## Install
+
+1. Open [Releases](../../releases/latest) and download `Pixora-<version>.dmg`.
+2. Open the DMG and drag **Pixora** onto **Applications**.
+3. First launch: right-click Pixora in Applications → **Open** → **Open**.
+   The app is ad-hoc signed and not notarized, so macOS asks once.
+4. For the `pixora` command in Terminal, double-click **Cài lệnh pixora (CLI).command** in the DMG.
+
+If macOS says the app is "damaged" or refuses to open it, run once:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/Pixora.app
+```
+
+### Automatic updates
+
+Pixora checks for a new version once a day; check now from **Pixora → Kiểm tra cập nhật…** (Check for updates). When one is available the app shows the release notes, downloads the DMG, verifies its SHA-256, replaces itself and relaunches.
+
+The first time, the app needs a **read-only GitHub token**, stored in this Mac's Keychain:
+
+1. Open the [token page](https://github.com/settings/personal-access-tokens/new) (fine-grained token).
+2. **Repository access**: only the Pixora repository. **Permissions → Contents**: Read-only.
+3. Paste it into the app's update dialog.
+
+From Terminal: `pixora update` (check), `pixora update --install` (install; quit the app first), `pixora update --token <token>` (save the token). `PIXORA_GITHUB_TOKEN` overrides the Keychain for scripts.
+
+### Recover mode (optional)
+
+Recover uses diffusion to redraw skin, pores, hair strands and fur. Its models are about 2.7 GB, so they ship separately:
+
+1. Download `Pixora-Recover-<version>-1.zip` and `-2.zip` from Releases into **Downloads**.
+2. In the DMG, double-click **Cài model Recover.command**. The models go to `~/Library/Application Support/Pixora/Models/Recover`.
+3. Reopen Pixora; the **Recover** card appears.
+
+### Requirements
+
+| | Minimum | Recommended |
+|---|---|---|
+| macOS | 14 Sonoma | 15 or later |
+| Chip | Apple Silicon M1 | M2/M3/M4 Pro, Max or Ultra |
+| RAM | 8 GB (regular upscaling) | 32 GB or more for Recover |
+| Disk | 1 GB | 4 GB with Recover |
+
+### Uninstall
+
+Delete `/Applications/Pixora.app` and `~/Library/Application Support/Pixora`. If you installed the CLI, also delete `pixora` from `/opt/homebrew/bin`, `/usr/local/bin` or `~/.local/bin`.
+
+## Examples
+
+Inputs were downscaled 4x and JPEG-compressed to mimic web images. Left: bicubic; right: Pixora 4x.
+
+| Backlit ThinkPad keyboard (text protection) |
+|---|
+| ![ThinkPad keyboard: bicubic vs Pixora](docs/samples/compare-thinkpad.jpg) |
+
+| Macaw (Standard) |
+|---|
+| ![Macaw: bicubic vs Pixora](docs/samples/compare-macaw.jpg) |
+
+| Portrait (Realistic face) |
+|---|
+| ![Portrait: bicubic vs Pixora](docs/samples/compare-face.jpg) |
+
+Sample sources: [docs/samples/CREDITS.md](docs/samples/CREDITS.md) (CC0 and public domain).
+
+## Features
+
+| Area | Details |
+|---|---|
+| **AI modes** | **Auto** (measures noise, sharpness, JPEG blocking and faces, then picks a model); **Standard** (Pixora Photo v1, our own DAT2 fine-tune, and SPAN trained on compressed, blurred, noisy real photos; true materials, no invented texture); **High Fidelity** (faithful, Detail slider); **Art & CGI**; **Low Resolution** (continuous denoise); **Recover** (diffusion pixel regeneration with Creativity and Resemblance sliders). |
+| **Text** | Apple Vision finds and reads text, including Vietnamese with full diacritics. Text regions are rebuilt by a **dedicated text model** (RealPLKSR fine-tuned on synthetic Vietnamese/English text), averaged over 8 flips/rotations for straight strokes. Line size is measured from the pixels: lines too small (capitals under ~4 px) stay faithful. |
+| **Faces** | Realistic (CodeFormer, identity slider) or Creative (GFPGAN). Recover adds dedicated eye and eyebrow passes. |
+| **Size** | 1–16x scale, or target width/height. Uses the smallest 2x/4x base that suffices, stacks passes beyond 4x. Context-padded tiles, no seams. |
+| **Adjustments** | Denoise, sharpen, JPEG artefact removal, dehalo, local contrast and vibrance, natural grain. Source colour is restored after upscaling. Transparency is kept. |
+| **Export** | PNG, JPEG, TIFF, HEIC or source format. Keeps EXIF/GPS/IPTC, writes DPI, prefix/suffix naming, never overwrites the original. |
+| **CLI and API** | `pixora` for batches (recursive, JSON output). `pixora serve` starts a local HTTP API, also switchable from the app. |
+| **Speed** | GPU by default. On a Mac Studio M2 Ultra: 800×600 to 4x in about 5–8 s (Standard), to 2x in about 1 s; Recover on a 1536 px image in about 35 s. |
+
+## CLI
+
+```bash
+pixora upscale photo.jpg --scale 4
+```
+
+```bash
+pixora upscale ~/Pictures/laptop -r -o ~/Pictures/out -m std --scale 2 -f jpg --jq 92 --se
+```
+
+```bash
+pixora upscale portrait.jpg -m rec --cr 75 --rs 40
+```
+
+| Flag | Meaning |
+|---|---|
+| `-m` | `auto`, `std`, `hf`, `art`, `low`, `rec` |
+| `--scale`, `--width`, `--height` | Output size |
+| `--dn`, `--sh`, `--cm`, `--dh` | Denoise, sharpen, JPEG cleanup, dehalo (0–100) |
+| `--dt`, `--tx`, `--lc` | Detail (High Fidelity), grain, local contrast |
+| `--fr`, `--frc`, `--frf` | Face recovery, `realistic`/`creative`, identity strength |
+| `--cr`, `--rs`, `--prompt` | Recover: Creativity, Resemblance, optional prompt |
+| `--no-text-protect`, `--no-color-fix` | Disable text protection, disable colour restore |
+| `-f`, `--jq`, `--res` | Format, JPEG/HEIC quality, DPI |
+| `-r`, `-o`, `--se`, `--am` | Recursive, output folder, skip existing, append model to file name |
+| `-d` | `gpu` (default), `all`, `ane`, `cpu` |
+| `--json`, `-q` | JSON report (includes recognised text), quiet |
+
+See all flags with `pixora upscale --help`. Other commands: `pixora analyze photo.jpg` (suggested Auto settings), `pixora models` (models and file locations).
+
+## API
+
+```bash
+pixora serve --port 8765
+```
+
+```bash
+curl --data-binary @photo.jpg "http://127.0.0.1:8765/v1/upscale?mode=std&scale=2&format=jpg" -o photo-2x.jpg
+```
+
+Endpoints: `/health`, `/v1/models`, `/v1/analyze`, `/v1/upscale`. `/v1/upscale` parameters: `mode`, `scale` or `width`/`height`, `denoise`, `sharpen`, `compression`, `detail`, `texture`, `contrast`, `dehalo`, `face`, `face_style=realistic|creative`, `face_fidelity`, `creativity`, `resemblance`, `prompt`, `text=0|1`, `color=0|1`, `device=gpu|all|ane|cpu`, `format=png|jpg|tiff|heic`, `quality`. The report is in the `X-Pixora-Report` header; send `Accept: application/json` for JSON with a base64 image.
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| macOS won't open it, says "damaged" | Run `xattr -dr com.apple.quarantine /Applications/Pixora.app`, then reopen |
+| `pixora: command not found` | Double-click **Cài lệnh pixora (CLI).command** in the DMG, open a new Terminal |
+| No Recover card | Recover models not installed, see Recover mode |
+| Update says the token cannot read the Pixora repo | The token needs Contents: Read-only on the Pixora repository; create a new one and paste it into the update dialog |
+| First run much slower | Core ML compiles models for this Mac on first use (tens of seconds); later runs are fast |
+| Mac slows down during Recover | Recover uses a lot of GPU memory; close other heavy apps (VMs, many browser tabs) |
+
+## Build from source
+
+Requires Xcode 16 or later (Swift 6). Regenerating models also needs [uv](https://docs.astral.sh/uv/) and Python 3.12.
+
+```bash
+uv run --python 3.12 --with torch --with coremltools --with numpy --with pillow tools/convert_models.py
+```
+
+```bash
+uv run --python 3.12 --with torch --with coremltools --with numpy --with pillow --with spandrel python tools/convert_extra.py
+```
+
+```bash
+Pixora/scripts/build.sh --install
+```
+
+| Script | Purpose |
+|---|---|
+| `Pixora/scripts/build.sh` | Builds app and CLI, compiles models, ad-hoc signs → `Pixora/build/Pixora.app`. `--install` copies to /Applications and links `pixora` |
+| `Pixora/scripts/make_dmg.sh` | Builds the installer `Pixora-<version>.dmg` and `.dmg.sha256` (required by the updater); `--recover` also builds the two Recover model zips |
+| `generative/convert_recover.sh` | Converts Realistic Vision 5.1 + ControlNet Tile to Core ML for Recover |
+| `training/` | Synthetic text data, fine-tune configs (traiNNer-redux on the Mac GPU), `eval_text.py` scorer |
+
+If the checkout is in an iCloud-synced folder (such as Desktop), the scripts assemble and sign in a temporary folder to avoid the "detritus not allowed" codesign error.
+
+## Architecture
+
+```
+Pixora (Swift package)
+├── PixoraCore     engine: Core ML tiling, model choice, colour and text protection,
+│                  face restoration, Recover (diffusion), Auto analysis, image I/O, HTTP API
+├── pixora         CLI (swift-argument-parser)
+└── PixoraApp      SwiftUI app
+```
+
+## Documentation
+
+- [Changelog (Vietnamese)](CHANGELOG.md)
+- [Design and analysis](docs/pixora-design.md)
+- [Fine-tuning research](docs/finetune-research.md)
+- [Model licenses](Pixora/Models/LICENSES.md)
+
+## Models and credits
+
+- [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) (BSD-3-Clause), Xintao Wang et al.
+- [4xBHI_dat2_real](https://huggingface.co/Phips/4xBHI_dat2_real) (base of the Photo model), [2xNomosUni_span_multijpg_ldl](https://openmodeldb.info/models/2x-NomosUni-span-multijpg-ldl) and [4xNomosWebPhoto_RealPLKSR](https://openmodeldb.info/models/4x-NomosWebPhoto-RealPLKSR) (CC-BY-4.0), Philip Hofmann. The Photo model (Pixora Photo v1) is a fine-tune of 4xBHI_dat2_real; the text model is a fine-tune of 4xNomosWebPhoto_RealPLKSR.
+- [GFPGAN](https://github.com/TencentARC/GFPGAN) (Apache-2.0), Tencent ARC
+- [CodeFormer](https://github.com/sczhou/CodeFormer) (S-Lab License 1.0, **non-commercial only**), Shangchen Zhou et al.
+- Recover: [Realistic Vision V5.1](https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE) and [ControlNet 1.1 Tile](https://huggingface.co/lllyasviel/control_v11f1e_sd15_tile) (CreativeML OpenRAIL-M), [sd-vae-ft-mse](https://huggingface.co/stabilityai/sd-vae-ft-mse) (MIT), converted with Apple's [ml-stable-diffusion](https://github.com/apple/ml-stable-diffusion)
+
+## Contributors
+
+| | Role |
+|---|---|
+| **Steven Lam** ([@PhatLam1108](https://github.com/PhatLam1108)) | Product owner: requirements, image-quality direction, real-world testing |
+| **Claude** ([Anthropic](https://www.anthropic.com/claude)) | AI developer: architecture, code, model conversion and training, tests and docs via [Claude Code](https://claude.com/claude-code) |
+
+Commits written with Claude carry a `Co-Authored-By: Claude` line.
+
+## License
+
+Pixora source code: all rights reserved. Free, non-commercial use. Each model keeps its author's license, see [Pixora/Models/LICENSES.md](Pixora/Models/LICENSES.md).

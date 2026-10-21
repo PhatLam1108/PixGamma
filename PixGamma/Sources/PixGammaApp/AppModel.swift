@@ -61,6 +61,11 @@ final class AppModel: ObservableObject {
     @Published var outputFolder: URL?
     @Published var suffix = "-pixgamma"
 
+    // View state
+    @Published var showTuning = true
+    @Published var compareStyle: CompareStyle = .split
+    @Published var zoom: ZoomLevel = .fit
+
     @Published var busy = false
     @Published var stage = ""
     @Published var progress: Double = 0

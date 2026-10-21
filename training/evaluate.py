@@ -1,4 +1,4 @@
-"""Score Pixora photo models against the acceptance bar on held-out images.
+"""Score PixGamma photo models against the acceptance bar on held-out images.
 
 Two scenarios per test image (GT = clean image, long side 1024):
   4x  web copy: GT /4 bicubic + JPEG q80        -> 4x model                 -> compare GT
@@ -53,7 +53,7 @@ def to_t(im):
 
 @torch.inference_mode()
 def run(model, lr, tile=192, pad=16, scale=4):
-    """Tiled inference with context padding, like Pixora's TileEngine."""
+    """Tiled inference with context padding, like PixGamma's TileEngine."""
     x = to_t(lr)
     _, _, h, w = x.shape
     out = torch.zeros(1, 3, h * scale, w * scale, device=DEV)

@@ -1,4 +1,4 @@
-# Pixora Photo v2: Photo v1 thêm một lớp GAN nhẹ để tái tạo hạt mịn (vải áo thun, mặt phím, da)
+# PixGamma Photo v2: Photo v1 thêm một lớp GAN nhẹ để tái tạo hạt mịn (vải áo thun, mặt phím, da)
 # mà loss trung thực (v1) làm phẳng mất. Giữ Charbonnier + LDL để không vẽ vân giả lên mảng phẳng;
 # GAN chỉ 0.05 (mẫu traiNNer 0.1), perceptual nhẹ, DISTS cao hơn v1 để ưu tiên kết cấu thật.
 # Vùng chữ trong app vẫn chạy bằng model trung thực (v1), không qua GAN.

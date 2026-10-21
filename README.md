@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/brand/logo.svg" width="96" alt="Logo Pixora">
+  <img src="docs/brand/logo.svg" width="96" alt="Logo PixGamma">
 </p>
 
-<h1 align="center">Pixora</h1>
+<h1 align="center">PixGamma</h1>
 
 <p align="center">
   Phóng to và phục hồi ảnh bằng AI trên Mac. Chạy hoàn toàn trên máy bằng GPU Apple Silicon.<br>
@@ -24,7 +24,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/brand/hero-vi-dark.webp">
-    <img src="docs/brand/hero-vi-light.webp" width="100%" alt="Pixora: con vẹt và chân dung trước/sau khi phóng 4x">
+    <img src="docs/brand/hero-vi-light.webp" width="100%" alt="PixGamma: con vẹt và chân dung trước/sau khi phóng 4x">
   </picture>
 </p>
 
@@ -32,7 +32,9 @@
 
 ## Giới thiệu
 
-Pixora nhận một ảnh nhỏ, mờ hoặc đã nén và trả lại bản lớn hơn 2x đến 16x, có lại chi tiết. Gồm app macOS, lệnh `pixora` để xử lý hàng loạt và HTTP API cục bộ để nối vào quy trình đăng bài.
+PixGamma nhận một ảnh nhỏ, mờ hoặc đã nén và trả lại bản lớn hơn 2x đến 16x, có lại chi tiết. Gồm app macOS, lệnh `pixgamma` để xử lý hàng loạt và HTTP API cục bộ để nối vào quy trình đăng bài.
+
+PixGamma là tên mới của **Pixora** (đến bản 0.2.1): bản cũ tự cập nhật lên PixGamma, lệnh `pixora` và các biến `PIXORA_*` vẫn dùng được.
 
 Ba nguyên tắc thiết kế:
 
@@ -42,37 +44,37 @@ Ba nguyên tắc thiết kế:
 
 ## Cài đặt
 
-1. Vào trang [Releases](../../releases/latest) và tải `Pixora-<phiên bản>.dmg`.
-2. Mở file DMG, kéo **Pixora** vào **Applications**.
-3. Lần đầu mở: chuột phải vào Pixora trong Applications → **Open** → **Open**.
+1. Vào trang [Releases](../../releases/latest) và tải `PixGamma-<phiên bản>.dmg`.
+2. Mở file DMG, kéo **PixGamma** vào **Applications**.
+3. Lần đầu mở: chuột phải vào PixGamma trong Applications → **Open** → **Open**.
    App được ký ad-hoc, chưa qua notarize của Apple, nên macOS hỏi xác nhận một lần.
-4. Muốn dùng lệnh `pixora` trong Terminal: trong DMG, bấm đúp **Cài lệnh pixora (CLI).command**.
+4. Muốn dùng lệnh `pixgamma` trong Terminal: trong DMG, bấm đúp **Cài lệnh pixgamma (CLI).command**.
 
 Nếu macOS báo ứng dụng "bị hỏng" hoặc không cho mở, chạy lệnh sau một lần:
 
 ```bash
-xattr -dr com.apple.quarantine /Applications/Pixora.app
+xattr -dr com.apple.quarantine /Applications/PixGamma.app
 ```
 
 ### Tự cập nhật
 
-Pixora tự kiểm tra bản mới mỗi ngày một lần; kiểm tra ngay ở menu **Pixora → Kiểm tra cập nhật…** Khi có bản mới, app hiện ghi chú phát hành, tải file DMG, kiểm tra mã SHA-256, thay app rồi tự mở lại.
+PixGamma tự kiểm tra bản mới mỗi ngày một lần; kiểm tra ngay ở menu **PixGamma → Kiểm tra cập nhật…** Khi có bản mới, app hiện ghi chú phát hành, tải file DMG, kiểm tra mã SHA-256, thay app rồi tự mở lại.
 
-Repo Pixora công khai nên **không cần token GitHub**. Không có token, GitHub cho mỗi địa chỉ IP 60 lần gọi mỗi giờ, thừa cho việc kiểm tra cập nhật. Nếu app báo hết lượt (vd nhiều máy chung một mạng), có thể dùng thêm một token để có 5.000 lượt mỗi giờ:
+Repo PixGamma công khai nên **không cần token GitHub**. Không có token, GitHub cho mỗi địa chỉ IP 60 lần gọi mỗi giờ, thừa cho việc kiểm tra cập nhật. Nếu app báo hết lượt (vd nhiều máy chung một mạng), có thể dùng thêm một token để có 5.000 lượt mỗi giờ:
 
 1. Mở [trang tạo token](https://github.com/settings/personal-access-tokens/new) (Fine-grained token).
 2. **Repository access**: Public repositories (read-only); không cần thêm quyền nào.
 3. Trong hộp thoại cập nhật báo lỗi, bấm **Dùng token GitHub…** rồi dán token. Token được cất trong Keychain của máy.
 
-Từ Terminal: `pixora update` (kiểm tra), `pixora update --install` (cài, cần đóng app trước), `pixora update --token <token>` (lưu token, không bắt buộc). Biến `PIXORA_GITHUB_TOKEN` dùng thay Keychain cho script.
+Từ Terminal: `pixgamma update` (kiểm tra), `pixgamma update --install` (cài, cần đóng app trước), `pixgamma update --token <token>` (lưu token, không bắt buộc). Biến `PIXGAMMA_GITHUB_TOKEN` dùng thay Keychain cho script.
 
 ### Chế độ Recover (tùy chọn)
 
 Recover dùng diffusion để vẽ lại da, lỗ chân lông, sợi tóc, lông thú. Bộ model nặng khoảng 2,7 GB nên tách khỏi DMG:
 
-1. Tải `Pixora-Recover-<phiên bản>-1.zip` và `-2.zip` ở trang Releases vào thư mục **Downloads**.
-2. Trong DMG, bấm đúp **Cài model Recover.command**. Model được cài vào `~/Library/Application Support/Pixora/Models/Recover`.
-3. Mở lại Pixora, thẻ **Recover** sẽ hiện ra.
+1. Tải `PixGamma-Recover-<phiên bản>-1.zip` và `-2.zip` ở trang Releases vào thư mục **Downloads**.
+2. Trong DMG, bấm đúp **Cài model Recover.command**. Model được cài vào `~/Library/Application Support/PixGamma/Models/Recover`.
+3. Mở lại PixGamma, thẻ **Recover** sẽ hiện ra.
 
 ### Yêu cầu
 
@@ -85,23 +87,23 @@ Recover dùng diffusion để vẽ lại da, lỗ chân lông, sợi tóc, lông
 
 ### Gỡ cài đặt
 
-Xóa `/Applications/Pixora.app` và thư mục `~/Library/Application Support/Pixora`. Nếu đã cài CLI, xóa thêm file `pixora` trong `/opt/homebrew/bin`, `/usr/local/bin` hoặc `~/.local/bin`.
+Xóa `/Applications/PixGamma.app` và thư mục `~/Library/Application Support/PixGamma`. Nếu đã cài CLI, xóa thêm file `pixgamma` trong `/opt/homebrew/bin`, `/usr/local/bin` hoặc `~/.local/bin`.
 
 ## Ví dụ
 
-Ảnh vào được thu nhỏ 4 lần rồi nén JPEG để giống ảnh lấy từ web. Bên trái phóng lại bằng bicubic, bên phải là Pixora 4x.
+Ảnh vào được thu nhỏ 4 lần rồi nén JPEG để giống ảnh lấy từ web. Bên trái phóng lại bằng bicubic, bên phải là PixGamma 4x.
 
 | Bàn phím ThinkPad đèn nền (giữ chữ) |
 |---|
-| ![Bàn phím ThinkPad: bicubic và Pixora](docs/samples/compare-thinkpad.jpg) |
+| ![Bàn phím ThinkPad: bicubic và PixGamma](docs/samples/compare-thinkpad.jpg) |
 
 | Vẹt (Standard) |
 |---|
-| ![Vẹt: bicubic và Pixora](docs/samples/compare-macaw.jpg) |
+| ![Vẹt: bicubic và PixGamma](docs/samples/compare-macaw.jpg) |
 
 | Chân dung (khuôn mặt Chân thực) |
 |---|
-| ![Chân dung: bicubic và Pixora](docs/samples/compare-face.jpg) |
+| ![Chân dung: bicubic và PixGamma](docs/samples/compare-face.jpg) |
 
 Nguồn ảnh mẫu ở [docs/samples/CREDITS.md](docs/samples/CREDITS.md) (CC0 và public domain).
 
@@ -109,27 +111,27 @@ Nguồn ảnh mẫu ở [docs/samples/CREDITS.md](docs/samples/CREDITS.md) (CC0 
 
 | Mảng | Nội dung |
 |---|---|
-| **Chế độ AI** | **Auto** (tự đo nhiễu, độ nét, khối JPEG, khuôn mặt rồi chọn model); **Standard** (Pixora Photo v1, DAT2 fine-tune riêng, và SPAN huấn luyện trên ảnh chụp thật bị nén, mờ, nhiễu; giữ đúng chất liệu, không vẽ vân giả); **High Fidelity** (trung thực, thanh Detail); **Art & CGI**; **Low Resolution** (khử nhiễu liên tục); **Recover** (tái tạo điểm ảnh bằng diffusion, thanh Creativity và Resemblance). |
+| **Chế độ AI** | **Auto** (tự đo nhiễu, độ nét, khối JPEG, khuôn mặt rồi chọn model); **Standard** (PixGamma Photo v1, DAT2 fine-tune riêng, và SPAN huấn luyện trên ảnh chụp thật bị nén, mờ, nhiễu; giữ đúng chất liệu, không vẽ vân giả); **High Fidelity** (trung thực, thanh Detail); **Art & CGI**; **Low Resolution** (khử nhiễu liên tục); **Recover** (tái tạo điểm ảnh bằng diffusion, thanh Creativity và Resemblance). |
 | **Chữ** | Apple Vision dò và đọc chữ, có tiếng Việt đủ dấu. Vùng chữ dựng lại bằng **model chữ riêng** (RealPLKSR fine-tune trên chữ Việt/Anh tự sinh), lấy trung bình 8 lượt lật/xoay cho nét thẳng. Đo cỡ từng dòng từ điểm ảnh: dòng quá nhỏ (chữ hoa dưới ~4 px) giữ bản trung thực. |
 | **Khuôn mặt** | Chân thực (CodeFormer, có thanh giữ nét mặt gốc) hoặc Sáng tạo (GFPGAN). Recover có thêm lượt riêng cho mắt và lông mày. |
 | **Kích thước** | Theo tỉ lệ 1–16x, theo chiều rộng hoặc chiều cao. Chọn mức gốc 2x/4x đủ dùng, chồng lượt khi trên 4x. Chia ô có ngữ cảnh nên không lộ đường ghép. |
 | **Tinh chỉnh** | Khử nhiễu, làm nét, khử nén JPEG, khử viền sáng, tương phản cục bộ và độ rực, kết cấu hạt. Giữ màu gốc sau khi phóng. Ảnh nền trong suốt giữ được alpha. |
 | **Xuất file** | PNG, JPEG, TIFF, HEIC hoặc giữ định dạng gốc. Giữ EXIF/GPS/IPTC, ghi DPI, đặt tiền tố/hậu tố, không bao giờ ghi đè ảnh gốc. |
-| **CLI và API** | `pixora` xử lý hàng loạt, đệ quy thư mục, in JSON. `pixora serve` mở HTTP API cục bộ, bật được ngay trong app. |
+| **CLI và API** | `pixgamma` xử lý hàng loạt, đệ quy thư mục, in JSON. `pixgamma serve` mở HTTP API cục bộ, bật được ngay trong app. |
 | **Tốc độ** | Mặc định chạy GPU. Trên Mac Studio M2 Ultra: ảnh 800×600 lên 4x khoảng 5–8 giây (Standard), lên 2x khoảng 1 giây; Recover ảnh 1536 px khoảng 35 giây. |
 
 ## Dùng CLI
 
 ```bash
-pixora upscale anh.jpg --scale 4
+pixgamma upscale anh.jpg --scale 4
 ```
 
 ```bash
-pixora upscale ~/Anh/laptop -r -o ~/Anh/out -m std --scale 2 -f jpg --jq 92 --se
+pixgamma upscale ~/Anh/laptop -r -o ~/Anh/out -m std --scale 2 -f jpg --jq 92 --se
 ```
 
 ```bash
-pixora upscale chan-dung.jpg -m rec --cr 75 --rs 40
+pixgamma upscale chan-dung.jpg -m rec --cr 75 --rs 40
 ```
 
 | Cờ | Ý nghĩa |
@@ -146,29 +148,29 @@ pixora upscale chan-dung.jpg -m rec --cr 75 --rs 40
 | `-d` | `gpu` (mặc định), `all`, `ane`, `cpu` |
 | `--json`, `-q` | In báo cáo JSON (có chữ đọc được), chạy im lặng |
 
-Xem đủ bằng `pixora upscale --help`. Lệnh khác: `pixora analyze anh.jpg` (in thiết lập Auto đề xuất), `pixora models` (liệt kê model và vị trí file).
+Xem đủ bằng `pixgamma upscale --help`. Lệnh khác: `pixgamma analyze anh.jpg` (in thiết lập Auto đề xuất), `pixgamma models` (liệt kê model và vị trí file).
 
 ## Dùng API
 
 ```bash
-pixora serve --port 8765
+pixgamma serve --port 8765
 ```
 
 ```bash
 curl --data-binary @anh.jpg "http://127.0.0.1:8765/v1/upscale?mode=std&scale=2&format=jpg" -o anh-2x.jpg
 ```
 
-Điểm cuối: `/health`, `/v1/models`, `/v1/analyze`, `/v1/upscale`. Tham số của `/v1/upscale`: `mode`, `scale` hoặc `width`/`height`, `denoise`, `sharpen`, `compression`, `detail`, `texture`, `contrast`, `dehalo`, `face`, `face_style=realistic|creative`, `face_fidelity`, `creativity`, `resemblance`, `prompt`, `text=0|1`, `color=0|1`, `device=gpu|all|ane|cpu`, `format=png|jpg|tiff|heic`, `quality`. Báo cáo nằm trong header `X-Pixora-Report`; gửi `Accept: application/json` để nhận JSON kèm ảnh base64.
+Điểm cuối: `/health`, `/v1/models`, `/v1/analyze`, `/v1/upscale`. Tham số của `/v1/upscale`: `mode`, `scale` hoặc `width`/`height`, `denoise`, `sharpen`, `compression`, `detail`, `texture`, `contrast`, `dehalo`, `face`, `face_style=realistic|creative`, `face_fidelity`, `creativity`, `resemblance`, `prompt`, `text=0|1`, `color=0|1`, `device=gpu|all|ane|cpu`, `format=png|jpg|tiff|heic`, `quality`. Báo cáo nằm trong header `X-PixGamma-Report`; gửi `Accept: application/json` để nhận JSON kèm ảnh base64.
 
 ## Xử lý sự cố
 
 | Hiện tượng | Cách xử lý |
 |---|---|
-| macOS không cho mở, báo "bị hỏng" | Chạy `xattr -dr com.apple.quarantine /Applications/Pixora.app` rồi mở lại |
-| `pixora: command not found` | Bấm đúp **Cài lệnh pixora (CLI).command** trong DMG, mở Terminal mới |
+| macOS không cho mở, báo "bị hỏng" | Chạy `xattr -dr com.apple.quarantine /Applications/PixGamma.app` rồi mở lại |
+| `pixgamma: command not found` | Bấm đúp **Cài lệnh pixgamma (CLI).command** trong DMG, mở Terminal mới |
 | Không thấy thẻ Recover | Chưa cài model Recover, xem mục Chế độ Recover |
 | Cập nhật báo "GitHub giới hạn 60 lần kiểm tra mỗi giờ" | Chờ tới giờ được báo, hoặc bấm **Dùng token GitHub…** và dán một token (xem [Tự cập nhật](#tự-cập-nhật)) |
-| Cập nhật báo "Token GitHub đã lưu không hợp lệ" | Bấm **Xoá token** trong hộp thoại cập nhật (repo công khai không cần token), hoặc `PIXORA_GITHUB_TOKEN` đang đặt sai: bỏ biến này |
+| Cập nhật báo "Token GitHub đã lưu không hợp lệ" | Bấm **Xoá token** trong hộp thoại cập nhật (repo công khai không cần token), hoặc `PIXGAMMA_GITHUB_TOKEN` đang đặt sai: bỏ biến này |
 | Lần chạy đầu chậm hơn hẳn | Core ML compile model cho máy ở lần đầu (vài chục giây), các lần sau nhanh |
 | Máy chậm khi chạy Recover | Recover dùng nhiều RAM GPU; đóng app nặng khác (máy ảo, trình duyệt nhiều tab) |
 
@@ -185,13 +187,13 @@ uv run --python 3.12 --with torch --with coremltools --with numpy --with pillow 
 ```
 
 ```bash
-Pixora/scripts/build.sh --install
+PixGamma/scripts/build.sh --install
 ```
 
 | Script | Tác dụng |
 |---|---|
-| `Pixora/scripts/build.sh` | Build app và CLI, compile model, ký ad-hoc → `Pixora/build/Pixora.app`. `--install` chép vào /Applications và link `pixora` |
-| `Pixora/scripts/make_dmg.sh` | Tạo file cài đặt `Pixora-<phiên bản>.dmg` và `.dmg.sha256` (bắt buộc cho tự cập nhật); `--recover` tạo thêm 2 file zip model Recover |
+| `PixGamma/scripts/build.sh` | Build app và CLI, compile model, ký ad-hoc → `PixGamma/build/PixGamma.app`. `--install` chép vào /Applications và link `pixgamma` |
+| `PixGamma/scripts/make_dmg.sh` | Tạo file cài đặt `PixGamma-<phiên bản>.dmg` và `.dmg.sha256` (bắt buộc cho tự cập nhật); `--recover` tạo thêm 2 file zip model Recover |
 | `generative/convert_recover.sh` | Chuyển Realistic Vision 5.1 + ControlNet Tile sang Core ML cho Recover |
 | `training/` | Sinh dữ liệu chữ, cấu hình fine-tune (traiNNer-redux trên GPU Mac), bộ chấm `eval_text.py` |
 
@@ -200,18 +202,18 @@ Nếu thư mục nằm trong vùng đồng bộ iCloud (ví dụ Desktop), các 
 ## Kiến trúc
 
 ```
-Pixora (Swift package)
-├── PixoraCore     engine: chia ô Core ML, chọn model, giữ màu, giữ chữ, phục hồi mặt,
+PixGamma (Swift package)
+├── PixGammaCore     engine: chia ô Core ML, chọn model, giữ màu, giữ chữ, phục hồi mặt,
 │                  Recover (diffusion), phân tích Auto, đọc/ghi ảnh, HTTP API
-├── pixora         CLI (swift-argument-parser)
-└── PixoraApp      app SwiftUI
+├── pixgamma         CLI (swift-argument-parser)
+└── PixGammaApp      app SwiftUI
 ```
 
 | Thư mục | Nội dung |
 |---|---|
-| `Pixora/Sources/` | Mã nguồn app, CLI và engine |
-| `Pixora/Models/` | Model Core ML (không nằm trong git) và [giấy phép model](Pixora/Models/LICENSES.md) |
-| `Pixora/scripts/` | Build, cài đặt, đóng gói DMG |
+| `PixGamma/Sources/` | Mã nguồn app, CLI và engine |
+| `PixGamma/Models/` | Model Core ML (không nằm trong git) và [giấy phép model](PixGamma/Models/LICENSES.md) |
+| `PixGamma/scripts/` | Build, cài đặt, đóng gói DMG |
 | `tools/`, `generative/` | Chuyển trọng số PyTorch sang Core ML |
 | `training/` | Dữ liệu, cấu hình fine-tune, bộ chấm |
 | `docs/` | Thiết kế, nghiên cứu, ảnh mẫu, logo |
@@ -219,16 +221,16 @@ Pixora (Swift package)
 ## Tài liệu
 
 - [Nhật ký thay đổi](CHANGELOG.md)
-- [Thiết kế và phân tích](docs/pixora-design.md): phân tích Real-ESRGAN và cách hiện thực từng tính năng
+- [Thiết kế và phân tích](docs/pixgamma-design.md): phân tích Real-ESRGAN và cách hiện thực từng tính năng
 - [Nghiên cứu fine-tune](docs/finetune-research.md): kiến trúc, checkpoint, công cụ, công thức
-- [Giấy phép model](Pixora/Models/LICENSES.md)
+- [Giấy phép model](PixGamma/Models/LICENSES.md)
 
 ## Model và ghi công
 
-Pixora dùng các model mã nguồn mở, đã chuyển sang Core ML:
+PixGamma dùng các model mã nguồn mở, đã chuyển sang Core ML:
 
 - [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) (BSD-3-Clause), Xintao Wang và cộng sự
-- [4xBHI_dat2_real](https://huggingface.co/Phips/4xBHI_dat2_real) (gốc của model Photo), [2xNomosUni_span_multijpg_ldl](https://openmodeldb.info/models/2x-NomosUni-span-multijpg-ldl) và [4xNomosWebPhoto_RealPLKSR](https://openmodeldb.info/models/4x-NomosWebPhoto-RealPLKSR) (CC-BY-4.0), Philip Hofmann. Model Photo (Pixora Photo v1) là bản fine-tune của 4xBHI_dat2_real, model chữ là bản fine-tune của 4xNomosWebPhoto_RealPLKSR.
+- [4xBHI_dat2_real](https://huggingface.co/Phips/4xBHI_dat2_real) (gốc của model Photo), [2xNomosUni_span_multijpg_ldl](https://openmodeldb.info/models/2x-NomosUni-span-multijpg-ldl) và [4xNomosWebPhoto_RealPLKSR](https://openmodeldb.info/models/4x-NomosWebPhoto-RealPLKSR) (CC-BY-4.0), Philip Hofmann. Model Photo (PixGamma Photo v1) là bản fine-tune của 4xBHI_dat2_real, model chữ là bản fine-tune của 4xNomosWebPhoto_RealPLKSR.
 - [GFPGAN](https://github.com/TencentARC/GFPGAN) (Apache-2.0), Tencent ARC
 - [CodeFormer](https://github.com/sczhou/CodeFormer) (S-Lab License 1.0, **chỉ phi thương mại**), Shangchen Zhou và cộng sự
 - Recover: [Realistic Vision V5.1](https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE) và [ControlNet 1.1 Tile](https://huggingface.co/lllyasviel/control_v11f1e_sd15_tile) (CreativeML OpenRAIL-M), [sd-vae-ft-mse](https://huggingface.co/stabilityai/sd-vae-ft-mse) (MIT), chuyển bằng [ml-stable-diffusion](https://github.com/apple/ml-stable-diffusion) của Apple
@@ -244,4 +246,4 @@ Các commit viết cùng Claude có dòng `Co-Authored-By: Claude`.
 
 ## Giấy phép
 
-Mã nguồn Pixora: bảo lưu mọi quyền. Dùng miễn phí, phi thương mại. Mỗi model giữ giấy phép riêng của tác giả, xem [Pixora/Models/LICENSES.md](Pixora/Models/LICENSES.md).
+Mã nguồn PixGamma: bảo lưu mọi quyền. Dùng miễn phí, phi thương mại. Mỗi model giữ giấy phép riêng của tác giả, xem [PixGamma/Models/LICENSES.md](PixGamma/Models/LICENSES.md).

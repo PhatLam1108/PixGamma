@@ -4,31 +4,35 @@ Theo kiểu [Keep a Changelog](https://keepachangelog.com/vi/1.1.0/), đánh s�
 Bản 0.x là bản phát triển nội bộ, dùng miễn phí, phi thương mại.
 
 ## [Chưa phát hành]
+### Đổi tên
+- **Pixora đổi tên thành PixGamma** (tên Pixora trùng nhiều app AI chỉnh ảnh khác), kèm logo mới hình ống kính có lá khẩu. App là `PixGamma.app`, lệnh là `pixgamma`, repo là `PhatLam1108/PixGamma`, model ảnh là PixGamma Photo v1. Bundle id giữ nguyên `vn.phatlam.pixora`.
+- Giữ tương thích bản cũ: bản phát hành kèm thêm `Pixora-<version>.dmg` (chứa `Pixora.app`) để app 0.2.1 tự cập nhật được; bộ cập nhật mới chuyển `Pixora.app` thành `PixGamma.app` và trỏ lại các link lệnh `pixora`. Thư mục `Application Support/Pixora` (model đã compile, model Recover) tự chuyển sang `Application Support/PixGamma`. Lệnh `pixora` vẫn chạy (là tên khác của `pixgamma`), biến `PIXORA_*` vẫn được đọc khi không có `PIXGAMMA_*`.
+
 ### Sửa lỗi
 - **Chữ thân nhỏ trên biển chụp ảnh bị vẽ thành chữ bịa** (vd biển đường mòn cc0_269 thu còn 500 px, chữ hoa ~4 px: "stolen cattle" thành "stolen cottle", "a region where" thành "a region uibere"): mọi model đều vẽ lại nét mờ, nhiễu hạt thành chữ giống chữ mà sai. Nay mỗi dòng chữ Vision tìm thấy được đo tỉ lệ tương phản mực/nhiễu nền (SNR): dòng nhỏ hơn 13 px có SNR thấp (biển chụp: 10–19; banner, màn hình, phím, biển tàu điện: 30–260) và nằm trong một đoạn văn thì chuyển sang bản phóng thường: mềm hơn nhưng đúng chữ trong ảnh. Bộ chấm chữ giữ nguyên (OCR 91,1%, PSNR 30,50 dB, độ nét 0,69); 6 ảnh thật 4x giữ nguyên hoặc nhỉnh hơn (cc0_269 +0,002 dB); lá cây, lông vẹt, giấy bạc, đường phố, chân dung: không đổi điểm ảnh nào.
 - Chưa xử lý: chữ Vision không tìm thấy (vd chú thích ảnh ~2,5 px trên cùng biển, tương phản ~10 mức sáng trên nhiễu ~3). Vision không thấy chúng cả khi phóng bicubic 3x/4x; bộ dò nét chữ thử nghiệm bắt nhầm lá cây và nếp áo trước khi bắt được chú thích, nên đã bỏ.
 
 ### Thay đổi
-- **Tự cập nhật không cần token GitHub nữa**: repo Pixora đã công khai, nên app và `pixora update` đọc GitHub Releases và tải DMG mà không cần token. Token trong Keychain hoặc `PIXORA_GITHUB_TOKEN` vẫn được dùng nếu có (nâng giới hạn từ 60 lên 5.000 lần mỗi giờ); hết lượt thì app báo rõ giờ thử lại và cho nhập token ở nút **Dùng token GitHub…**. `pixora update --token` vẫn còn, không bắt buộc.
+- **Tự cập nhật không cần token GitHub nữa**: repo PixGamma đã công khai, nên app và `pixgamma update` đọc GitHub Releases và tải DMG mà không cần token. Token trong Keychain hoặc `PIXGAMMA_GITHUB_TOKEN` vẫn được dùng nếu có (nâng giới hạn từ 60 lên 5.000 lần mỗi giờ); hết lượt thì app báo rõ giờ thử lại và cho nhập token ở nút **Dùng token GitHub…**. `pixgamma update --token` vẫn còn, không bắt buộc.
 
 ## [0.2.1] - 2026-10-20
 ### Kiểm tra
 - Chạy đủ các chế độ (Auto, Standard, High Fidelity, Art & CGI, Low Resolution, Recover, phục hồi mặt realistic/creative), tỉ lệ 1x–16x, `--width`/`--height`, mọi thanh tinh chỉnh, thiết bị gpu/ane/all/cpu, trên ảnh 1 px, 48 px, dải 2000 × 60, 3000 × 2000, ảnh xám, CMYK, nền trong suốt, palette, TIFF, WebP, HEIC; xuất PNG, JPEG, HEIC, TIFF. Tất cả chạy xong, giữ kênh trong suốt.
 
 ### Sửa lỗi
-- **Chữ trên phím mềm và xiêu vẹo** (vd chữ Y): vùng chữ chạy bằng model Text v3, nay kém hơn Pixora Photo v1 (v1 đã train cùng 2.500 ô chữ), và chữ nhỏ còn bị chuyển sang bản phóng mềm. Nay vùng chữ chạy bằng Photo v1 với 8 lượt lật/xoay, bỏ bước làm mềm chữ nhỏ (Photo v1 đọc đúng cả chữ hoa 3,6 px). Bộ chấm chữ: OCR 89,2% → 90,4%, PSNR 29,2 → 30,7 dB, độ nét 0,58 → 0,69; ảnh bàn phím thật +1,1 dB, quanh chữ Y +1,9 dB. `PIXORA_TEXT_MODEL` chọn model khác cho vùng chữ khi chấm.
-- **Vùng chữ chậm sau khi chuyển sang Photo v1**: 8 lượt lật/xoay của DAT2 làm ảnh bàn phím 480 px mất 37 giây ở 4x. Nay Photo v1 chạy 2 lượt (giữ nguyên + xoay 180°): 12 giây, đọc chữ còn tốt hơn (OCR 91,1% so với 90,4%), PSNR ảnh bàn phím 25,06 dB. `PIXORA_TEXT_TTA=1|2|4|8` chọn số lượt.
+- **Chữ trên phím mềm và xiêu vẹo** (vd chữ Y): vùng chữ chạy bằng model Text v3, nay kém hơn PixGamma Photo v1 (v1 đã train cùng 2.500 ô chữ), và chữ nhỏ còn bị chuyển sang bản phóng mềm. Nay vùng chữ chạy bằng Photo v1 với 8 lượt lật/xoay, bỏ bước làm mềm chữ nhỏ (Photo v1 đọc đúng cả chữ hoa 3,6 px). Bộ chấm chữ: OCR 89,2% → 90,4%, PSNR 29,2 → 30,7 dB, độ nét 0,58 → 0,69; ảnh bàn phím thật +1,1 dB, quanh chữ Y +1,9 dB. `PIXGAMMA_TEXT_MODEL` chọn model khác cho vùng chữ khi chấm.
+- **Vùng chữ chậm sau khi chuyển sang Photo v1**: 8 lượt lật/xoay của DAT2 làm ảnh bàn phím 480 px mất 37 giây ở 4x. Nay Photo v1 chạy 2 lượt (giữ nguyên + xoay 180°): 12 giây, đọc chữ còn tốt hơn (OCR 91,1% so với 90,4%), PSNR ảnh bàn phím 25,06 dB. `PIXGAMMA_TEXT_TTA=1|2|4|8` chọn số lượt.
 - **Recover vẽ lại chữ trên phím** (vd A S D F G H J thành A S D Y G N I): Recover chỉ dò chữ trên ảnh gốc, nên bỏ sót từng chữ đơn trên phím rồi để diffusion vẽ lại. Nay dò như các chế độ khác (thêm lượt trên ảnh đã phóng): ảnh bàn phím màu giữ đúng mọi phím. Ảnh xám tương phản thấp vẫn có thể sót vài phím; khi đó tăng Resemblance trên 70 để khoá nét.
 - **Recover bị macOS tắt ngang ở ảnh lớn** (vd 3436 × 5194): kết quả Core ML của từng ô diffusion không được giải phóng cho tới hết vòng khử nhiễu, bộ nhớ tăng theo số ô (28,6 GB ở 1440 px, 63,5 GB ở 2160 px). Nay mỗi ô chạy trong autoreleasepool: 8,5 GB ở 1440 px, ảnh 3436 × 5194 chạy xong với 10,2 GB trong 8 phút, kết quả giống hệt từng điểm ảnh.
 
 ### Đang làm
-- **Pixora Photo v2 (chưa dùng)**: v1 thêm GAN nhẹ (0,05) để tái tạo hạt vải và mặt phím (`training/configs/photo2.yml`, 12.000 vòng). Kết cấu nhỉnh hơn một chút nhưng PSNR kém v1 trên cả 6 ảnh thật (−0,1 đến −2,1 dB), vỡ chữ nhỏ và răng cưa ở viền phím, nên app vẫn dùng v1.
+- **PixGamma Photo v2 (chưa dùng)**: v1 thêm GAN nhẹ (0,05) để tái tạo hạt vải và mặt phím (`training/configs/photo2.yml`, 12.000 vòng). Kết cấu nhỉnh hơn một chút nhưng PSNR kém v1 trên cả 6 ảnh thật (−0,1 đến −2,1 dB), vỡ chữ nhỏ và răng cưa ở viền phím, nên app vẫn dùng v1.
 
 ## [0.2.0] - 2026-10-20
 ### Cài đặt
-- **File cài đặt DMG** (`Pixora-0.2.0.dmg` ở trang Releases): kéo Pixora vào Applications; có sẵn CLI và mọi model phóng ảnh. Kèm "Cài lệnh pixora (CLI).command" (link `pixora` vào PATH), "Cài model Recover.command" và hướng dẫn ngắn. Script đóng gói: `Pixora/scripts/make_dmg.sh`.
-- **Tự cập nhật**: app kiểm tra GitHub Releases mỗi ngày một lần và ở menu Pixora → Kiểm tra cập nhật…; hiện ghi chú phát hành, tải DMG, chỉ cài khi mã SHA-256 khớp và app bên trong đúng bundle id và phiên bản, thay app rồi tự mở lại (nếu lỗi giữa chừng thì trả lại bản cũ). Repo riêng tư nên cần token GitHub chỉ đọc, cất trong Keychain. CLI: `pixora update [--install] [--token]`.
-- **Model Recover phát hành riêng** thành 2 file zip (~2,7 GB, vượt giới hạn 2 GB mỗi file của GitHub), cài vào `~/Library/Application Support/Pixora/Models/Recover`.
+- **File cài đặt DMG** (`PixGamma-0.2.0.dmg` ở trang Releases): kéo PixGamma vào Applications; có sẵn CLI và mọi model phóng ảnh. Kèm "Cài lệnh pixgamma (CLI).command" (link `pixgamma` vào PATH), "Cài model Recover.command" và hướng dẫn ngắn. Script đóng gói: `PixGamma/scripts/make_dmg.sh`.
+- **Tự cập nhật**: app kiểm tra GitHub Releases mỗi ngày một lần và ở menu PixGamma → Kiểm tra cập nhật…; hiện ghi chú phát hành, tải DMG, chỉ cài khi mã SHA-256 khớp và app bên trong đúng bundle id và phiên bản, thay app rồi tự mở lại (nếu lỗi giữa chừng thì trả lại bản cũ). Repo riêng tư nên cần token GitHub chỉ đọc, cất trong Keychain. CLI: `pixgamma update [--install] [--token]`.
+- **Model Recover phát hành riêng** thành 2 file zip (~2,7 GB, vượt giới hạn 2 GB mỗi file của GitHub), cài vào `~/Library/Application Support/PixGamma/Models/Recover`.
 - **Chung một số hiệu phiên bản** cho app, CLI, API và file cài đặt (`APIServer.version`).
 - README tiếng Việt và tiếng Anh viết lại: cài đặt, gỡ cài đặt, yêu cầu máy, bảng cờ CLI, tham số API, xử lý sự cố.
 
@@ -40,8 +44,8 @@ Bản 0.x là bản phát triển nội bộ, dùng miễn phí, phi thương m�
   - Prompt theo vùng: ô trên da mặt dùng prompt da (ControlNet chặt hơn, giữ phẳng vài bước đầu, làm sạch da nền bằng guided filter), ô còn lại dùng prompt tóc, vải. Prompt không nhắc mắt hay khuôn mặt, nên không mọc mắt thừa trên má; negative prompt chặn tóc rối, sợi tóc lạc ra nền, giọt nước.
   - Thanh Creativity (độ vẽ lại) và Resemblance (độ bám ảnh gốc, cao thì khoá cấu trúc để không bịa chữ). CLI `-m rec --cr --rs --prompt`, API `mode=recover&creativity=&resemblance=`.
   - Ảnh 1536 px khoảng 35 giây trên M2 Ultra.
-- **Model Photo mới: 4xBHI_dat2_real (DAT2, Phhofm, CC-BY-4.0)**, thay 4xNomosWebPhoto. Chấm 10 model 4x công khai được đánh giá cao (Hugging Face, OpenModelDB, GitHub) trên 40 ảnh thật (22 ảnh laptop, chân dung, động vật; `training/evaluate.py`): DAT2 đứng đầu, DISTS 0,173 và PSNR 29,0 dB, so với 0,199 và 26,9 dB của Nomos. Nomos vẽ vân giả lên hình nền, phím và lông thú; DAT2 giữ đúng chất liệu. Chậm hơn khoảng 5 lần mỗi ô (0,43 giây ô 256 px trên M2 Ultra), chỉ dùng khi phóng trên 2x (2x vẫn dùng SPAN, tốt nhất ở mức này). Chạy GPU; không chạy trên Neural Engine (biên dịch không xong), Pixora tự chuyển sang GPU khi chọn `ane` hoặc `all`.
-- **Pixora Photo v1, model ảnh chụp riêng của Pixora** (thay 4xBHI_dat2_real làm model Photo): DAT2 fine-tune 15.000 vòng từ 4xBHI_dat2_real trên ảnh CC0 đã lọc (chuỗi thu nhỏ + nén JPEG hai lần) và 2.500 ô chữ tự sinh, loss Charbonnier + MS-SSIM + LDL + focal frequency + DISTS, không GAN để không vẽ vân giả (`training/configs/photo1.yml`). Trên 40 ảnh chấm (không có trong dữ liệu train), phóng 4x: PSNR 30,5 dB (DAT2 gốc 29,0), DISTS 0,165 (0,173). DAT2 gốc làm ảnh sáng lên khoảng 1 mức xám và ngả màu ở vùng tối (phím vàng, da thuộc); v1 gần như không lệch màu (−0,06). Chạy cả pipeline trên ảnh laptop, da, vải: PSNR cao hơn ở cả 6 ảnh (+0,3 đến +3,7 dB). Cùng kiến trúc nên tốc độ như DAT2.
+- **Model Photo mới: 4xBHI_dat2_real (DAT2, Phhofm, CC-BY-4.0)**, thay 4xNomosWebPhoto. Chấm 10 model 4x công khai được đánh giá cao (Hugging Face, OpenModelDB, GitHub) trên 40 ảnh thật (22 ảnh laptop, chân dung, động vật; `training/evaluate.py`): DAT2 đứng đầu, DISTS 0,173 và PSNR 29,0 dB, so với 0,199 và 26,9 dB của Nomos. Nomos vẽ vân giả lên hình nền, phím và lông thú; DAT2 giữ đúng chất liệu. Chậm hơn khoảng 5 lần mỗi ô (0,43 giây ô 256 px trên M2 Ultra), chỉ dùng khi phóng trên 2x (2x vẫn dùng SPAN, tốt nhất ở mức này). Chạy GPU; không chạy trên Neural Engine (biên dịch không xong), PixGamma tự chuyển sang GPU khi chọn `ane` hoặc `all`.
+- **PixGamma Photo v1, model ảnh chụp riêng của PixGamma** (thay 4xBHI_dat2_real làm model Photo): DAT2 fine-tune 15.000 vòng từ 4xBHI_dat2_real trên ảnh CC0 đã lọc (chuỗi thu nhỏ + nén JPEG hai lần) và 2.500 ô chữ tự sinh, loss Charbonnier + MS-SSIM + LDL + focal frequency + DISTS, không GAN để không vẽ vân giả (`training/configs/photo1.yml`). Trên 40 ảnh chấm (không có trong dữ liệu train), phóng 4x: PSNR 30,5 dB (DAT2 gốc 29,0), DISTS 0,165 (0,173). DAT2 gốc làm ảnh sáng lên khoảng 1 mức xám và ngả màu ở vùng tối (phím vàng, da thuộc); v1 gần như không lệch màu (−0,06). Chạy cả pipeline trên ảnh laptop, da, vải: PSNR cao hơn ở cả 6 ảnh (+0,3 đến +3,7 dB). Cùng kiến trúc nên tốc độ như DAT2.
 - **Nhận diện chữ tiếng Việt**: Vision nhận diện chính xác `vi-VT` + `en-US`, đọc đủ dấu; dò thêm một lượt trên ảnh phóng 2x và trên ảnh đã phóng để bắt chữ nhỏ. Chữ đọc được ghi vào báo cáo (`text` trong JSON).
 - **Model chữ riêng (Text)**, RealPLKSR fine-tune từ 4xNomosWebPhoto qua ba vòng:
   - v1: 8.000 vòng trên 8.000 ô chữ tự sinh và ảnh chụp, thay RealESRNet trong vùng chữ.
@@ -49,7 +53,7 @@ Bản 0.x là bản phát triển nội bộ, dùng miễn phí, phi thương m�
   - v3: 8.000 vòng thêm loss tần số cao (focal frequency), độ sắc cạnh (gradient variance) và nét vẽ (line distiller), không dùng GAN để model không bịa nét.
   - Trên bộ chấm (`training/eval_text.py`: 5 font, câu chưa thấy khi train): độ nét so với ảnh gốc 0,73 (v1 0,54); chữ hoa 4,3 px đọc đúng 85,9% (bicubic 69,2%).
 - **Nét chữ thẳng hơn**: vùng chữ chạy model 8 lượt lật/xoay rồi lấy trung bình, độ gợn ngẫu nhiên ở nét mảnh triệt tiêu nhau (OCR 88,9% → 90,3%, PSNR +0,5 dB).
-- **Chữ quá nhỏ không bị vẽ thành chữ khác**: với chữ hoa khoảng 3,6 px ở ảnh gốc, dấu thanh chưa tới 1 điểm ảnh và model vẽ ra chữ sắc nhưng sai. Pixora đo độ trải dọc của mực chữ từng dòng ngay trên điểm ảnh (hộp chữ của Vision lệch 1–2 px ở cỡ này) và chuyển những dòng đó sang bản phóng trung thực: mềm hơn nhưng đúng chữ. Đã thử dựng lại chữ nhỏ bằng font theo cách đọc của Vision và giữ khi khớp điểm ảnh, nhưng bỏ vì cách đọc sai khớp ảnh gần bằng cách đọc đúng.
+- **Chữ quá nhỏ không bị vẽ thành chữ khác**: với chữ hoa khoảng 3,6 px ở ảnh gốc, dấu thanh chưa tới 1 điểm ảnh và model vẽ ra chữ sắc nhưng sai. PixGamma đo độ trải dọc của mực chữ từng dòng ngay trên điểm ảnh (hộp chữ của Vision lệch 1–2 px ở cỡ này) và chuyển những dòng đó sang bản phóng trung thực: mềm hơn nhưng đúng chữ. Đã thử dựng lại chữ nhỏ bằng font theo cách đọc của Vision và giữ khi khớp điểm ảnh, nhưng bỏ vì cách đọc sai khớp ảnh gần bằng cách đọc đúng.
 - **Bộ dữ liệu chữ tự sinh** (`training/make_text_dataset.py`): 114 font có tiếng Việt, banner, nhãn, bàn phím, nền ảnh thật; tùy chọn `--small`, `--chain`, `--thin` (chữ trắng nét mảnh trên nền banner).
 - **Bộ chấm chữ**: `training/eval_text.py` (model) và `training/eval_text_pipeline.py` (cả pipeline): OCR theo từng dòng và từng cỡ chữ, PSNR, độ nét quanh nét chữ.
 - **Khử viền sáng (halo)** quanh cạnh tương phản cao, ví dụ chữ tối trên màn hình sáng: mỗi pixel output bị giới hạn trong khoảng sáng tối của vùng lân cận ở ảnh gốc (cộng một biên nhỏ), nên phần vượt ngưỡng do model thêm vào bị cắt, còn kết cấu thật như lông, da vẫn giữ. Mặc định 80, chỉnh bằng `--dh` / `dehalo=`.
@@ -59,7 +63,7 @@ Bản 0.x là bản phát triển nội bộ, dùng miễn phí, phi thương m�
 ### Sửa lỗi
 - **Cuối dòng chữ nhỏ bị vỡ khối**: Vision hay dừng sớm vài chữ ở dòng chữ nhỏ, phần còn lại giữ output của model ảnh. Nay vùng chữ được nối dài theo mực chữ tới hết dòng.
 - **Bộ chấm OCR cho điểm nhiễu**: Vision đọc một dòng khác đi tùy dòng bên cạnh, nên dòng giống hệt từng điểm ảnh vẫn bị chấm khác. Nay mỗi dòng được cắt riêng rồi mới đọc.
-- **CLI `pixora` gọi từ PATH báo không tìm thấy model**: đường dẫn file chạy lấy từ argv[0] (chỉ là "pixora"), nên không tìm được thư mục model trong app. Nay dùng đường dẫn tuyệt đối.
+- **CLI `pixgamma` gọi từ PATH báo không tìm thấy model**: đường dẫn file chạy lấy từ argv[0] (chỉ là "pixgamma"), nên không tìm được thư mục model trong app. Nay dùng đường dẫn tuyệt đối.
 - **Chữ mềm và có quầng sáng sau khi giữ chữ**: bước giữ màu gốc lấy lại màu từ ảnh nguồn (đã mờ, nhiễu JPEG quanh nét) và phủ lên chữ vừa dựng lại. Nay bước này bỏ qua vùng chữ.
 - **Auto chọn nhầm Art & CGI cho ảnh sản phẩm nền trắng** (22/22 ảnh Lenovo): nền studio bị tính là mảng phẳng. Nay Auto bỏ qua các pixel giống màu nền ở viền ảnh, và chỉ coi là tranh vẽ khi phần không phẳng chủ yếu là nét viền cứng (render 3D và ảnh chụp chuyển sáng tối mượt). Kết quả: 22/22 ảnh dùng model ảnh thật.
 - **Thay model cùng tên nhưng app vẫn chạy bản cũ**: bản compile trong Application Support chỉ được nhận diện theo tên và ngày sửa của symlink. Nay mỗi bản compile kèm dấu vân tay của gói nguồn (đường dẫn thật, ngày và cỡ của manifest và trọng số), nên đổi sang bộ model khác hay model fine-tune sẽ tự compile lại.
@@ -68,7 +72,7 @@ Bản 0.x là bản phát triển nội bộ, dùng miễn phí, phi thương m�
 ### Đang làm
 - **Model chữ v4 (chưa dùng)**: train thêm 8.000 vòng với chữ trắng nét mảnh trên nền banner (`training/configs/text4.yml`, `make_text_dataset.py --thin 0.5 --chain 0.6`). Nét hơn v3 (0,77 so với 0,73) nhưng đọc chữ hoa 4,3 px kém hơn (83,2% so với 85,9%), nên app vẫn dùng v3.
 - **Fine-tune model riêng cho ảnh sản phẩm laptop**: môi trường traiNNer-redux chạy trên GPU Mac (MPS, torch 2.14.1). Kế hoạch hai pha (fidelity rồi GAN nhẹ), tăng trọng số loss ở vùng chữ phím, sinh ảnh LR offline mô phỏng ảnh web. Chi tiết ở [docs/finetune-research.md](docs/finetune-research.md).
-- **Chạy thử pha 1 thành công trên GPU Mac**: `training/train_mps.py` thay các lệnh gọi CUDA của traiNNer-redux bằng MPS, cấu hình mẫu ở `training/configs/phase1_trial.yml` (Charbonnier + MS-SSIM + LDL + Sobel). Với 64 ảnh CC0/public domain (2272 ô), batch 8, ô LR 64 px: khoảng 1,6 vòng/giây trên M2 Ultra, 200 vòng mất 2 phút. PSNR val tăng từ 26,7 lên 29,9 dB. `tools/convert_extra.py` xuất được checkpoint fine-tune sang Core ML (`PIXORA_PHOTO_WEIGHTS`, `PIXORA_OUT_DIR`), sai khác so với PyTorch 0,25/255.
+- **Chạy thử pha 1 thành công trên GPU Mac**: `training/train_mps.py` thay các lệnh gọi CUDA của traiNNer-redux bằng MPS, cấu hình mẫu ở `training/configs/phase1_trial.yml` (Charbonnier + MS-SSIM + LDL + Sobel). Với 64 ảnh CC0/public domain (2272 ô), batch 8, ô LR 64 px: khoảng 1,6 vòng/giây trên M2 Ultra, 200 vòng mất 2 phút. PSNR val tăng từ 26,7 lên 29,9 dB. `tools/convert_extra.py` xuất được checkpoint fine-tune sang Core ML (`PIXGAMMA_PHOTO_WEIGHTS`, `PIXGAMMA_OUT_DIR`), sai khác so với PyTorch 0,25/255.
 
 ## [0.1.0] - 2026-10-18
 ### Tính năng mới
@@ -87,10 +91,10 @@ Bản 0.x là bản phát triển nội bộ, dùng miễn phí, phi thương m�
 - **Tinh chỉnh**: khử nhiễu, làm nét, khử nén JPEG, tương phản cục bộ và độ rực, kết cấu hạt tự nhiên (tránh da "nhựa"). Mọi độ mạnh theo thang 0–100.
 - **Ảnh có nền trong suốt**: kênh alpha được phóng riêng rồi ghép lại.
 - **Xuất file** PNG, JPEG, TIFF (nén ZIP), HEIC hoặc giữ định dạng gốc. Giữ EXIF/GPS/IPTC, ghi DPI, đặt tiền tố/hậu tố tên file, không bao giờ ghi đè ảnh gốc.
-- **CLI `pixora`**: `upscale` (hàng loạt, đệ quy thư mục, bỏ qua file đã có, xuất JSON), `analyze`, `models`, `serve`. Cờ ngắn gọn (`-m std`, `--dn`, `--sh`, `--fr`, `--am`, `--se`…).
-- **HTTP API cục bộ** (`pixora serve`, mặc định `127.0.0.1:8765`): `/health`, `/v1/models`, `/v1/analyze`, `/v1/upscale`. Trả ảnh kèm báo cáo trong header `X-Pixora-Report`, hoặc JSON có ảnh base64. Bật/tắt được ngay trong app.
+- **CLI `pixgamma`**: `upscale` (hàng loạt, đệ quy thư mục, bỏ qua file đã có, xuất JSON), `analyze`, `models`, `serve`. Cờ ngắn gọn (`-m std`, `--dn`, `--sh`, `--fr`, `--am`, `--se`…).
+- **HTTP API cục bộ** (`pixgamma serve`, mặc định `127.0.0.1:8765`): `/health`, `/v1/models`, `/v1/analyze`, `/v1/upscale`. Trả ảnh kèm báo cáo trong header `X-PixGamma-Report`, hoặc JSON có ảnh base64. Bật/tắt được ngay trong app.
 - **Ưu tiên GPU Apple Silicon**: mặc định chạy GPU. Đo trên Mac Studio M2 Ultra với model Standard: GPU 1.8 giây, Neural Engine 3.9 giây.
-- **Đóng gói**: `scripts/build.sh` build bản release, compile model, ký ad-hoc và tạo `Pixora.app` có sẵn CLI bên trong. Đóng gói và ký ở thư mục tạm để tránh lỗi "detritus" của iCloud Desktop.
+- **Đóng gói**: `scripts/build.sh` build bản release, compile model, ký ad-hoc và tạo `PixGamma.app` có sẵn CLI bên trong. Đóng gói và ký ở thư mục tạm để tránh lỗi "detritus" của iCloud Desktop.
 
 ### Sửa lỗi
 - Chữ trên phím bị đậm và cong queo: thử nghiệm ép tương phản về hai mức mực/nền làm phình nét (viền anti-alias bị đẩy về phía chữ) và khuếch đại độ lượn của khối JPEG; bộ dò chữ theo tương phản còn nhận nhầm lá cây, bokeh, lông chim thành chữ. Đã bỏ cả hai, giữ cách dựng vùng chữ bằng model trung thực.
@@ -99,5 +103,5 @@ Bản 0.x là bản phát triển nội bộ, dùng miễn phí, phi thương m�
 - Giao diện bản đầu bị vỡ: thanh trượt lệch khỏi nhãn trong cột hẹp, khung giữa trống khi chưa xem trước. Đã làm lại toàn bộ.
 
 ### Nghiên cứu
-- Phân tích Real-ESRGAN và cách hiện thực từng tính năng, ghi trong [docs/pixora-design.md](docs/pixora-design.md).
+- Phân tích Real-ESRGAN và cách hiện thực từng tính năng, ghi trong [docs/pixgamma-design.md](docs/pixgamma-design.md).
 - Khảo sát kiến trúc nhẹ, checkpoint ảnh thật, công cụ huấn luyện và công thức fine-tune: [docs/finetune-research.md](docs/finetune-research.md).

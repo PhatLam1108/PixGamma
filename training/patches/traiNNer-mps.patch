@@ -7,7 +7,7 @@ index 4c29130..5bb821d 100644
      def __init__(self, opt: ReduxOptions) -> None:
          self.opt = opt
 -        self.device = torch.device("cuda" if opt.num_gpu != 0 else "cpu")
-+        # Pixora patch: train on the Apple GPU when TRAINNER_MPS=1 and no CUDA GPU is configured.
++        # PixGamma patch: train on the Apple GPU when TRAINNER_MPS=1 and no CUDA GPU is configured.
 +        use_mps = opt.num_gpu == 0 and os.environ.get("TRAINNER_MPS") == "1" and torch.backends.mps.is_available()
 +        self.device = torch.device("cuda" if opt.num_gpu != 0 else ("mps" if use_mps else "cpu"))
          self.is_train = opt.is_train
@@ -39,7 +39,7 @@ index 87e6f3d..1165736 100644
 -        )
 +        if torch.cuda.is_available():
 +            message += f"[peak VRAM: {torch.cuda.max_memory_allocated() / (1024**3):.2f} GB] "
-+        elif torch.backends.mps.is_available():  # Pixora patch
++        elif torch.backends.mps.is_available():  # PixGamma patch
 +            message += f"[MPS mem: {torch.mps.current_allocated_memory() / (1024**3):.2f} GB] "
  
          # Log any additional variables (typically losses)

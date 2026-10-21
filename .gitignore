@@ -2,17 +2,17 @@
 .DS_Store
 
 # Swift / build output
-Pixora/.build/
-Pixora/build/
+PixGamma/.build/
+PixGamma/build/
 *.xcodeproj/xcuserdata/
 
 # Core ML models are large; they are published as GitHub Release assets.
 # Rebuild them with tools/convert_models.py and tools/convert_extra.py.
-Pixora/Models/*.mlpackage
-Pixora/Models/*.mlmodelc/
+PixGamma/Models/*.mlpackage
+PixGamma/Models/*.mlmodelc/
 
 # Local test images (contain system sample images that must not be redistributed)
-Pixora/TestImages
+PixGamma/TestImages
 
 # Downloaded weights and third-party sources
 tools/weights/
@@ -33,11 +33,11 @@ __pycache__/
 
 # Folders kept out of iCloud sync (".nosync" suffix) and their symlinks
 *.nosync
-Pixora/.build
-Pixora/build
+PixGamma/.build
+PixGamma/build
 training/traiNNer-redux
 tools/weights
 training/*.log
-Pixora/Models/Recover
+PixGamma/Models/Recover
 generative/ml-stable-diffusion
 generative/*.log

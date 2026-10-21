@@ -1,7 +1,7 @@
 # Nguồn ảnh mẫu
 
 Ảnh gốc trong `docs/samples/source/` được tải từ Wikimedia Commons. Ảnh so sánh `compare-*.jpg`
-và ảnh bìa `docs/brand/hero-*.webp` do Pixora tạo từ các ảnh này (thu nhỏ 4 lần, nén JPEG, rồi phóng lại).
+và ảnh bìa `docs/brand/hero-*.webp` do PixGamma tạo từ các ảnh này (thu nhỏ 4 lần, nén JPEG, rồi phóng lại).
 
 | File | Ảnh gốc | Tác giả | Giấy phép |
 |---|---|---|---|

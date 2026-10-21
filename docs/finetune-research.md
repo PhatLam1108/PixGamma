@@ -1,4 +1,4 @@
-# Pixora — Nghiên cứu fine-tune mô hình SR trên ảnh sản phẩm laptop
+# PixGamma — Nghiên cứu fine-tune mô hình SR trên ảnh sản phẩm laptop
 
 *Cập nhật: 18/10/2026. Phạm vi: chọn kiến trúc, checkpoint gốc, toolkit, công thức loss/dataset, chế độ diffusion về sau, và kế hoạch cụ thể cho M2 Ultra + Core ML.*
 
@@ -13,7 +13,7 @@ Ký hiệu độ tin cậy: **[đã kiểm]** là thông tin đọc trực tiế
 - **Checkpoint khởi đầu:** `4xNomosWebPhoto_RealPLKSR` hoặc `4xNomos2_realplksr_dysample` (Philip Hofmann / Helaman, CC-BY-4.0, train cho ảnh chụp). Pretrain fidelity: `4x_realplksr_mssim_pretrain` (musl, CC0).
 - **Toolkit:** **traiNNer-redux** (Apache-2.0, còn phát triển, có sẵn template RealPLKSR/SPAN, LDL/DISTS/MS-SSIM/HSLuv). Code đang hard-code `cuda`/`cpu`, nên **cần vá vài dòng để chạy MPS**. neosr đòi CUDA ≥ 12.4, không dùng được trên Mac.
 - **Nguyên nhân chính gây "sắc giả":** config gốc của Real-ESRGAN bật **USM sharpen trên GT** (`l1_gt_usm`, `percep_gt_usm: True`), tức là dạy mô hình làm nét quá tay. Thêm vào đó là trọng số perceptual dồn vào `conv5_4` và GAN 0.1. Khi fine-tune cần **tắt USM**, hạ GAN xuống 0.02–0.05, bật LDL, ưu tiên DISTS, và nội suy mạng với bản fidelity.
-- **Lưu ý license:** **CodeFormer** đang dùng là S-Lab License (chỉ cho mục đích **phi thương mại**). Nên kiểm tra nếu Pixora sẽ bán.
+- **Lưu ý license:** **CodeFormer** đang dùng là S-Lab License (chỉ cho mục đích **phi thương mại**). Nên kiểm tra nếu PixGamma sẽ bán.
 
 ---
 
@@ -59,7 +59,7 @@ Số liệu dưới đây lấy từ bảng benchmark của traiNNer-redux (`doc
 | 4xClearRealityV1 (span), 4xUltraSharpV2 (DAT2) | – | 4 | **CC-BY-NC-SA** | Phi thương mại, tránh dùng |
 | 2xText2HD_v.1 (realplksr) | realplksr | 2 | CC-BY-SA-4.0 | Train trên sách/chữ scan, có thể tham khảo cho mảng chữ |
 
-CC-BY-4.0 yêu cầu **ghi công** (ví dụ trong màn About/Credits của Pixora). Một số dataset gốc (Nomos-v2, Nomos8k) chưa xác định rõ license [chưa kiểm]. Mô hình fine-tune lại là sản phẩm phái sinh của checkpoint, nên dùng CC0 hoặc CC-BY là an toàn nhất.
+CC-BY-4.0 yêu cầu **ghi công** (ví dụ trong màn About/Credits của PixGamma). Một số dataset gốc (Nomos-v2, Nomos8k) chưa xác định rõ license [chưa kiểm]. Mô hình fine-tune lại là sản phẩm phái sinh của checkpoint, nên dùng CC0 hoặc CC-BY là an toàn nhất.
 
 **Khuyến nghị:** (1) **RealPLKSR LN pixelshuffle** cho chế độ chất lượng; (2) **SPAN** cho chế độ nhanh hoặc preview. Cả hai thuần CNN, tile-safe và có sẵn checkpoint ảnh chụp với license mở.
 
@@ -85,7 +85,7 @@ CC-BY-4.0 yêu cầu **ghi công** (ví dụ trong màn About/Credits của Pixo
 2. **Huấn luyện hai pha:** fidelity trước (Charbonnier hoặc MS-SSIM+L1, không GAN), sau đó GAN nhẹ. traiNNer khuyến nghị luôn dùng pretrain fidelity cho model perceptual [đã kiểm, training_guidelines.md].
 3. **Tỉ lệ loss gợi ý cho pha GAN** (theo thang của traiNNer): `mssim 0.5–1.0`, `charbonnier/L1 1.0`, `perceptual 0.01` (thang traiNNer; tương đương ~0.5–1.0 ở BasicSR), `dists 0.25–0.3`, `ldl 1.0`, `hsluv 1.0`, **`gan 0.02–0.05`** (template mặc định là 0.1). Nếu dùng VGG thì giảm trọng số `conv5_4`: lớp sâu là thủ phạm gây vân "sơn dầu".
 4. **LDL** (Liang và cs., CVPR 2022, [repo](https://github.com/csjliang/LDL), Apache-2.0) phạt các vùng artifact GAN dựa trên phương sai cục bộ của residual, đồng thời dùng EMA của G. Đã có sẵn trong traiNNer (`ldlloss`).
-5. **Nội suy mạng** (ESRGAN/Real-ESRGAN): `θ = α·θ_GAN + (1−α)·θ_fidelity` với α ≈ 0.5–0.8. Cách này hợp với thanh "Detail/Realism" của Pixora. Có thể xuất 2–3 mức α thành các `.mlpackage` riêng, hoặc blend output (rẻ hơn nhưng kém hơn nội suy trọng số).
+5. **Nội suy mạng** (ESRGAN/Real-ESRGAN): `θ = α·θ_GAN + (1−α)·θ_fidelity` với α ≈ 0.5–0.8. Cách này hợp với thanh "Detail/Realism" của PixGamma. Có thể xuất 2–3 mức α thành các `.mlpackage` riêng, hoặc blend output (rẻ hơn nhưng kém hơn nội suy trọng số).
 6. Dùng **EMA** (`ema_decay 0.999`) và chọn checkpoint bằng mắt trên tập val *thật*. GAN dễ sụp nếu chạy quá lâu.
 
 ### 3.2 Giữ chữ (keycap, nhãn, tem thông số)
@@ -128,7 +128,7 @@ Kết luận: nếu cần chế độ "Recovery", OSEDiff (Apache + OpenRAIL) l�
 
 ---
 
-## 5. Kế hoạch đề xuất cho Pixora
+## 5. Kế hoạch đề xuất cho PixGamma
 
 **Kiến trúc:** RealPLKSR, `dim 64, n_blocks 28, kernel 17, layer_norm: true, upsampler: pixelshuffle`, scale 4. Bản 2x có thể train sau từ `2x_realplksr_mssim_pretrain` (CC0).
 
@@ -147,7 +147,7 @@ Kết luận: nếu cần chế độ "Recovery", OSEDiff (Apache + OpenRAIL) l�
 
 **Sketch config pha 2 (traiNNer-redux):**
 ```yaml
-name: 4x_pixora_realplksr_laptop_gan
+name: 4x_pixgamma_realplksr_laptop_gan
 scale: 4
 use_amp: false            # MPS: train fp32
 use_compile: false
@@ -222,7 +222,7 @@ ml = ct.convert(
     compute_precision=ct.precision.FLOAT16,
     minimum_deployment_target=ct.target.macOS14,
 )
-ml.save("Pixora_RealPLKSR_4x_256.mlpackage")
+ml.save("PixGamma_RealPLKSR_4x_256.mlpackage")
 ```
 Kiểm tra sau khi export: so PyTorch fp32 với Core ML fp16 trên 20 tile, PSNR nên > 45 dB và không có NaN. Nếu LayerNorm tràn fp16, giữ riêng op này ở fp32 qua `ct.transform.FP16ComputePrecision(op_selector=...)`. Ngoài tile cố định 256, có thể dùng `EnumeratedShapes` (256 và 512) để giảm số tile. Overlap nên 16–32 px, blend bằng cửa sổ cosine.
 

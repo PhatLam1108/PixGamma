@@ -1,4 +1,4 @@
-"""Prototype of Pixora Recover (PyTorch/MPS) to tune quality before the Core ML port.
+"""Prototype of PixGamma Recover (PyTorch/MPS) to tune quality before the Core ML port.
 
 Pipeline:
   1. photo network upscale (4xNomosWebPhoto RealPLKSR) to the target size

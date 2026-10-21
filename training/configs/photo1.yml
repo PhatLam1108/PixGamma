@@ -1,4 +1,4 @@
-# Pixora Photo v1: model ảnh chụp riêng của Pixora. DAT2 fine-tune từ 4xBHI_dat2_real (Phhofm, CC-BY-4.0).
+# PixGamma Photo v1: model ảnh chụp riêng của PixGamma. DAT2 fine-tune từ 4xBHI_dat2_real (Phhofm, CC-BY-4.0).
 # Dữ liệu: ảnh CC0/public domain đã lọc tranh vẽ và ảnh nhạy cảm, bỏ ảnh dùng để chấm (photo_exclude.txt);
 # một nửa ảnh nhỏ làm bằng chuỗi thu nhỏ + nén JPEG hai lần như ảnh web; thêm 2.500 ô chữ để không làm vỡ nét chữ.
 # Loss: giữ đúng điểm ảnh (Charbonnier, MS-SSIM), chặn vệt giả (LDL), giữ tần số cao (focal frequency),

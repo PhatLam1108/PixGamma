@@ -1,4 +1,4 @@
-"""Synthetic text dataset for Pixora's text model (Vietnamese + English).
+"""Synthetic text dataset for PixGamma's text model (Vietnamese + English).
 
 Renders 512x512 HR tiles of crisp text in many system fonts, sizes, colours and layouts
 (banners, spec labels, captions, keyboard keycaps) over solid, gradient and photo

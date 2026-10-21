@@ -1,8 +1,8 @@
-"""Scores the full Pixora pipeline (detection + Text model + blending) on the eval_text banners.
+"""Scores the full PixGamma pipeline (detection + Text model + blending) on the eval_text banners.
 
 Usage (from training/traiNNer-redux):
-  .venv/bin/python ../eval_text_pipeline.py --pixora ../../Pixora/.build/release/pixora --models ../../Pixora/Models \
-      [--label NAME] [--out DIR] [-- extra pixora flags]
+  .venv/bin/python ../eval_text_pipeline.py --pixgamma ../../PixGamma/.build/release/pixgamma --models ../../PixGamma/Models \
+      [--label NAME] [--out DIR] [-- extra pixgamma flags]
 """
 import argparse
 import json
@@ -20,9 +20,9 @@ import eval_text as E  # noqa: E402
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--pixora", required=True)
+    ap.add_argument("--pixgamma", required=True)
     ap.add_argument("--models", required=True)
-    ap.add_argument("--label", default="pixora")
+    ap.add_argument("--label", default="pixgamma")
     ap.add_argument("--out", default=tempfile.mkdtemp(prefix="eval_pipe_"))
     ap.add_argument("rest", nargs="*")
     a = ap.parse_args()
@@ -34,8 +34,8 @@ def main():
         gt, mask = E.banner(font)
         E.web_copy(gt).save(os.path.join(lr_dir, f"{font[0]}.png"))
         gts[font[0]] = (gt, mask)
-    env = dict(os.environ, PIXORA_MODELS=os.path.abspath(a.models))
-    subprocess.run([a.pixora, lr_dir, "-m", "std", "--scale", "4", "-o", out_dir, "-f", "png", *a.rest],
+    env = dict(os.environ, PIXGAMMA_MODELS=os.path.abspath(a.models))
+    subprocess.run([a.pixgamma, lr_dir, "-m", "std", "--scale", "4", "-o", out_dir, "-f", "png", *a.rest],
                    env=env, check=True, capture_output=True)
     entries, sharp, psnr = [], [], []
     for name, (gt, mask) in gts.items():

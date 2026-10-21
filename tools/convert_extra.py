@@ -1,13 +1,13 @@
-"""Convert extra open-source models to Core ML for Pixora.
+"""Convert extra open-source models to Core ML for PixGamma.
 
-Produces (in Pixora/Models/):
+Produces (in PixGamma/Models/):
   Standard2x.mlpackage   RealESRGAN_x2plus (BSD-3-Clause), 256 -> 512
   LowRes.mlpackage       realesr-general-x4v3 + wdn-x4v3 DNI blend with a "denoise" input
                          (falls back to fixed LowRes_dnXXX variants if dynamic weights fail)
   FaceRestore.mlpackage  GFPGAN v1.4 (Apache-2.0), 512 -> 512
   HighFidelity.mlpackage RealESRNet_x4plus (PSNR-oriented), 256 -> 1024
   Photo.mlpackage        4xBHI_dat2_real (Phhofm, CC-BY-4.0), DAT2, 256 -> 1024      [needs --with spandrel]
-                         (PIXORA_PHOTO_WEIGHTS: any RealPLKSR or DAT checkpoint, e.g. a fine-tune)
+                         (PIXGAMMA_PHOTO_WEIGHTS: any RealPLKSR or DAT checkpoint, e.g. a fine-tune)
   Photo2x.mlpackage      2xNomosUni_span_multijpg_ldl (Phhofm, CC-BY-4.0), 256 -> 512 [needs --with spandrel]
   FaceRealistic.mlpackage CodeFormer (S-Lab License 1.0, NON-COMMERCIAL) with a "fidelity" input
 
@@ -36,7 +36,7 @@ import convert_models as base  # noqa: E402  (RRDBNet, SRVGGNetCompact, ImageWra
 
 ROOT = os.path.dirname(TOOLS_DIR)
 WEIGHTS_DIR = os.path.join(ROOT, "tools", "weights")
-OUT_DIR = os.environ.get("PIXORA_OUT_DIR") or os.path.join(ROOT, "Pixora", "Models")  # overrides base.OUT_DIR
+OUT_DIR = os.environ.get("PIXGAMMA_OUT_DIR") or os.path.join(ROOT, "PixGamma", "Models")  # overrides base.OUT_DIR
 TILE = 256
 FACE = 512
 
@@ -110,7 +110,7 @@ def convert_standard2x():
     mlmodel = ct.convert(traced, **image_io(example.shape),
                          compute_precision=ct.precision.FLOAT16,
                          minimum_deployment_target=ct.target.macOS14, convert_to="mlprogram")
-    mlmodel.short_description = "Pixora Standard 2x upscaler (RealESRGAN_x2plus, BSD-3-Clause)"
+    mlmodel.short_description = "PixGamma Standard 2x upscaler (RealESRGAN_x2plus, BSD-3-Clause)"
     mlmodel.user_defined_metadata["tile"] = str(TILE)
     mlmodel.user_defined_metadata["scale"] = "2"
     out = save(mlmodel, "Standard2x")
@@ -186,7 +186,7 @@ def convert_lowres_fixed(sd_a, sd_b, d, name):
     mlmodel = ct.convert(traced, **image_io(example.shape),
                          compute_precision=ct.precision.FLOAT16,
                          minimum_deployment_target=ct.target.macOS14, convert_to="mlprogram")
-    mlmodel.short_description = (f"Pixora LowRes 4x upscaler, denoise={d:.2f} "
+    mlmodel.short_description = (f"PixGamma LowRes 4x upscaler, denoise={d:.2f} "
                                  "(realesr-general-x4v3 / wdn-x4v3 DNI, BSD-3-Clause)")
     mlmodel.user_defined_metadata["tile"] = str(TILE)
     mlmodel.user_defined_metadata["scale"] = "4"
@@ -220,7 +220,7 @@ def convert_lowres():
         io["inputs"].append(ct.TensorType(name="denoise", shape=(1,), dtype=np.float32))
         mlmodel = ct.convert(traced, **io, compute_precision=ct.precision.FLOAT16,
                              minimum_deployment_target=ct.target.macOS14, convert_to="mlprogram")
-        mlmodel.short_description = ("Pixora LowRes 4x upscaler with denoise strength input 0..1 "
+        mlmodel.short_description = ("PixGamma LowRes 4x upscaler with denoise strength input 0..1 "
                                      "(realesr-general-x4v3 / wdn-x4v3 DNI, BSD-3-Clause)")
         mlmodel.input_description["denoise"] = "Denoise strength 0..1 (1 = strongest, plain x4v3)"
         mlmodel.user_defined_metadata["tile"] = str(TILE)
@@ -384,7 +384,7 @@ def convert_face():
                              (ct.precision.FLOAT32, "FP32")):
         mlmodel = ct.convert(traced, **image_io(example.shape), compute_precision=precision,
                              minimum_deployment_target=ct.target.macOS14, convert_to="mlprogram")
-        mlmodel.short_description = "Pixora face restoration (GFPGAN v1.4, Apache-2.0), 512x512 aligned face"
+        mlmodel.short_description = "PixGamma face restoration (GFPGAN v1.4, Apache-2.0), 512x512 aligned face"
         mlmodel.user_defined_metadata["size"] = str(FACE)
         mlmodel.user_defined_metadata["precision"] = label
         out = save(mlmodel, "FaceRestore")
@@ -467,14 +467,14 @@ def convert_highfidelity():
     net = base.RRDBNet(num_block=23)
     net.load_state_dict(base.load_weights(download(URL_ESRNET)), strict=True)
     out = convert_fixed_sr("HighFidelity", net.eval(), 4,
-                           "Pixora High Fidelity 4x upscaler (RealESRNet_x4plus, PSNR-oriented, BSD-3-Clause)",
+                           "PixGamma High Fidelity 4x upscaler (RealESRNet_x4plus, PSNR-oriented, BSD-3-Clause)",
                            real=load_test_image(PARROT, TILE))
     unit_check(out)
 
 
 # --------------------------------------------------------------------------- Photo / Photo2x (Phhofm, CC-BY-4.0)
 
-# Photo since 0.2.0: 4xBHI_dat2_real scored best of ten public 4x models on Pixora's photo set
+# Photo since 0.2.0: 4xBHI_dat2_real scored best of ten public 4x models on PixGamma's photo set
 # (laptop shots, portraits, animals; training/evaluate.py): DISTS 0.173 vs 0.199 for NomosWebPhoto.
 URL_PHOTO = "https://huggingface.co/Phips/4xBHI_dat2_real/resolve/main/4xBHI_dat2_real.safetensors"
 URL_PHOTO_NOMOS = ("https://github.com/Phhofm/models/releases/download/4xNomosWebPhoto_RealPLKSR/"
@@ -519,7 +519,7 @@ def tile_seam_check(model, name, scale):
 
 def _patch_dat_for_coreml():
     """DAT's window merge divides tensor shapes as floats, and coremltools casts 1-element
-    arrays to int in a way NumPy 2 rejects. Pixora runs one fixed-size tile at a time."""
+    arrays to int in a way NumPy 2 rejects. PixGamma runs one fixed-size tile at a time."""
     import importlib
     import coremltools.converters.mil.frontend.torch.ops as ops
     from coremltools.converters.mil import Builder as mb
@@ -529,7 +529,7 @@ def _patch_dat_for_coreml():
         img = img_splits_hw.view(1, H // H_sp, W // W_sp, H_sp, W_sp, -1)
         return img.permute(0, 1, 3, 2, 4, 5).contiguous().view(1, H, W, -1)
     dat.windows2img = windows2img
-    if getattr(ops._cast, "_pixora", False):
+    if getattr(ops._cast, "_pixgamma", False):
         return
     orig = ops._cast
 
@@ -539,21 +539,21 @@ def _patch_dat_for_coreml():
             context.add(mb.const(val=dtype(np.asarray(x.val).reshape(-1)[0]), name=node.name), node.name)
             return
         return orig(context, node, dtype, dtype_name)
-    cast._pixora = True
+    cast._pixgamma = True
     ops._cast = cast
 
 
 def convert_photo():
-    # PIXORA_PHOTO_WEIGHTS / PIXORA_PHOTO_NAME export another checkpoint (a fine-tune in
+    # PIXGAMMA_PHOTO_WEIGHTS / PIXGAMMA_PHOTO_NAME export another checkpoint (a fine-tune in
     # training/experiments/*/models/*.safetensors, or NomosWebPhoto) instead of the stock one.
-    weights = os.environ.get("PIXORA_PHOTO_WEIGHTS") or download(URL_PHOTO)
-    name = os.environ.get("PIXORA_PHOTO_NAME", "Photo")
+    weights = os.environ.get("PIXGAMMA_PHOTO_WEIGHTS") or download(URL_PHOTO)
+    name = os.environ.get("PIXGAMMA_PHOTO_NAME", "Photo")
     net = _spandrel_load(weights)
     if type(net).__name__ == "DAT":
         _patch_dat_for_coreml()
         tile_seam_check(base.ImageWrapper(net).eval(), name, 4)
-        desc = os.environ.get("PIXORA_PHOTO_DESC", "Pixora Photo 4x upscaler (4xBHI_dat2_real by Phhofm, CC-BY-4.0)")
-        # "compute: gpu": the Neural Engine never finishes a DAT tile (attention); Pixora keeps it on the GPU.
+        desc = os.environ.get("PIXGAMMA_PHOTO_DESC", "PixGamma Photo 4x upscaler (4xBHI_dat2_real by Phhofm, CC-BY-4.0)")
+        # "compute: gpu": the Neural Engine never finishes a DAT tile (attention); PixGamma keeps it on the GPU.
         out = convert_fixed_sr(name, net, 4, desc, {"license": "CC-BY-4.0 4xBHI_dat2_real by Phhofm", "compute": "gpu"},
                                real=load_test_image(PARROT, TILE))
         unit_check(out, units=("CPU_AND_GPU",))
@@ -567,7 +567,7 @@ def convert_photo():
     norms = sorted({type(m.norm).__name__ for m in net.feats if hasattr(m, "norm")})
     print(f"{name}: RealPLKSR norm layers = {norms}, upsampler = {type(net.to_img).__name__}")
     tile_seam_check(base.ImageWrapper(net).eval(), name, 4)
-    desc = os.environ.get("PIXORA_PHOTO_DESC", "Pixora Photo 4x upscaler (RealPLKSR, CC-BY-4.0)")
+    desc = os.environ.get("PIXGAMMA_PHOTO_DESC", "PixGamma Photo 4x upscaler (RealPLKSR, CC-BY-4.0)")
     out = convert_fixed_sr(name, net, 4, desc,
                            {"license": "CC-BY-4.0, base RealPLKSR by Phhofm"},
                            real=load_test_image(PARROT, TILE))
@@ -587,7 +587,7 @@ def convert_photo2x():
             m.update_params()  # fuse the 1x1-3x3-1x1 + skip branches into eval_conv once
     c3.forward = _conv3xc_forward_eval
     out = convert_fixed_sr("Photo2x", net, 2,
-                           "Pixora Photo 2x upscaler (2xNomosUni_span_multijpg_ldl by Phhofm, CC-BY-4.0)",
+                           "PixGamma Photo 2x upscaler (2xNomosUni_span_multijpg_ldl by Phhofm, CC-BY-4.0)",
                            {"license": "CC-BY-4.0 2xNomosUni_span_multijpg_ldl by Phhofm"},
                            real=load_test_image(PARROT, TILE))
     unit_check(out)
@@ -805,7 +805,7 @@ def convert_codeformer():
 
         mlmodel = ct.convert(traced, **io(), compute_precision=precision,
                              minimum_deployment_target=ct.target.macOS14, convert_to="mlprogram")
-        mlmodel.short_description = ("Pixora realistic face restoration (CodeFormer, S-Lab License 1.0 - "
+        mlmodel.short_description = ("PixGamma realistic face restoration (CodeFormer, S-Lab License 1.0 - "
                                      "NON-COMMERCIAL), 512x512 aligned face")
         mlmodel.input_description["fidelity"] = "CodeFormer w, 0..1: 0 = strongest restoration, 1 = most faithful"
         mlmodel.user_defined_metadata["size"] = str(FACE)

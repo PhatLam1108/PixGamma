@@ -1,7 +1,7 @@
-"""Convert open-source Real-ESRGAN weights to Core ML tile models for Pixora.
+"""Convert open-source Real-ESRGAN weights to Core ML tile models for PixGamma.
 
 Run:  uv run --python 3.12 --with torch --with coremltools --with numpy tools/convert_models.py
-Output: Pixora/Models/*.mlpackage  (input/output are RGB images, 4x upscale)
+Output: PixGamma/Models/*.mlpackage  (input/output are RGB images, 4x upscale)
 """
 import os
 import sys
@@ -15,7 +15,7 @@ import torch.nn.functional as F
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WEIGHTS_DIR = os.path.join(ROOT, "tools", "weights")
-OUT_DIR = os.path.join(ROOT, "Pixora", "Models")
+OUT_DIR = os.path.join(ROOT, "PixGamma", "Models")
 TILE = 256  # input tile edge; output tile is TILE * 4
 
 RELEASE = "https://github.com/xinntao/Real-ESRGAN/releases/download"
@@ -144,7 +144,7 @@ def convert(name, url, arch):
         minimum_deployment_target=ct.target.macOS14,
         convert_to="mlprogram",
     )
-    mlmodel.short_description = f"Pixora {name} 4x upscaler (Real-ESRGAN, BSD-3-Clause)"
+    mlmodel.short_description = f"PixGamma {name} 4x upscaler (Real-ESRGAN, BSD-3-Clause)"
     mlmodel.user_defined_metadata["tile"] = str(TILE)
     mlmodel.user_defined_metadata["scale"] = "4"
 

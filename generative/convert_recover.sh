@@ -1,6 +1,6 @@
 #!/bin/zsh
-# Builds Pixora's Recover model set: Realistic Vision 5.1 (SD 1.5) + ControlNet Tile, Core ML.
-# Output: generative/models.nosync/rv51-tile/Resources, linked as Pixora/Models/Recover.
+# Builds PixGamma's Recover model set: Realistic Vision 5.1 (SD 1.5) + ControlNet Tile, Core ML.
+# Output: generative/models.nosync/rv51-tile/Resources, linked as PixGamma/Models/Recover.
 set -e
 cd "$(dirname "$0")"
 if [ ! -d ml-stable-diffusion.nosync ]; then
@@ -21,5 +21,5 @@ mkdir -p ../models.nosync/rv51-tile
   --convert-text-encoder --convert-vae-decoder --convert-vae-encoder \
   --attention-implementation ORIGINAL --compute-unit CPU_AND_GPU --bundle-resources-for-swift-cli \
   -o ../models.nosync/rv51-tile
-ln -sfn "../../generative/models.nosync/rv51-tile/Resources" ../../Pixora/Models/Recover
-echo "✓ Recover: Pixora/Models/Recover"
+ln -sfn "../../generative/models.nosync/rv51-tile/Resources" ../../PixGamma/Models/Recover
+echo "✓ Recover: PixGamma/Models/Recover"

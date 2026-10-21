@@ -1,5 +1,5 @@
 #!/bin/bash
-# Clones traiNNer-redux (Apache-2.0), applies Pixora's Apple-GPU patch and installs it.
+# Clones traiNNer-redux (Apache-2.0), applies PixGamma's Apple-GPU patch and installs it.
 # The clone lives in training/traiNNer-redux.nosync (kept out of iCloud) with a symlink.
 set -euo pipefail
 cd "$(dirname "$0")"

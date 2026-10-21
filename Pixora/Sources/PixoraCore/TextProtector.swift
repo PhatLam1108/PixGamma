@@ -199,6 +199,64 @@ enum TextProtector {
         return varc.squareRoot()
     }
 
+    /// Ink contrast over background noise in a text line: 99th percentile of |luma − median|
+    /// over the noise, the residual against a 3×3 median in the flattest quarter of half-line
+    /// blocks (edges of the sign or keycap around the text would otherwise count as noise).
+    /// Clean print, screens, keycaps and transit signs score 30–260; small body text
+    /// photographed on a grainy sign scores 10–19, and there every network turns the strokes
+    /// into letter-like gibberish.
+    static func inkSNR(_ src: RGBAImage, _ box: CGRect) -> Double {
+        // Widened by a line height: Vision boxes a keycap letter tightly, leaving no flat ground
+        // to measure the noise on (the stroke edges then counted as noise).
+        let h = Double(box.height)
+        let x0 = max(0, Int(Double(box.minX) - h)), x1 = min(src.width, Int((Double(box.maxX) + h).rounded(.up)))
+        let y0 = max(0, Int(Double(box.minY) - 0.5 * h)), y1 = min(src.height, Int((Double(box.maxY) + 0.5 * h).rounded(.up)))
+        let w = x1 - x0, hh = y1 - y0
+        guard w >= 4, hh >= 4 else { return 0 }
+        var luma = [Double](repeating: 0, count: w * hh)
+        for y in 0..<hh { for x in 0..<w {
+            let p = ((y0 + y) * src.width + x0 + x) * 4
+            luma[y * w + x] = 0.299 * Double(src.pixels[p]) + 0.587 * Double(src.pixels[p + 1]) + 0.114 * Double(src.pixels[p + 2])
+        } }
+        let bg = luma.sorted()[luma.count / 2]
+        let d = luma.map { abs($0 - bg) }.sorted()
+        let peak = d[min(d.count - 1, Int(0.99 * Double(d.count)))]
+        guard peak > 0 else { return 0 }
+        var res = [Double](repeating: 0, count: w * hh)
+        for y in 0..<hh { for x in 0..<w {
+            var n: [Double] = []
+            for dy in -1...1 { for dx in -1...1 { n.append(luma[min(hh - 1, max(0, y + dy)) * w + min(w - 1, max(0, x + dx))]) } }
+            res[y * w + x] = abs(luma[y * w + x] - n.sorted()[4])
+        } }
+        let b = max(3, Int(h / 2 + 0.5))
+        var blocks: [Double] = []
+        var by = 0
+        while by + b <= hh {
+            var bx = 0
+            while bx + b <= w {
+                var v: [Double] = []
+                for y in by..<(by + b) { for x in bx..<(bx + b) { v.append(res[y * w + x]) } }
+                blocks.append(v.sorted()[v.count / 2])
+                bx += b
+            }
+            by += b
+        }
+        guard !blocks.isEmpty else { return peak / 0.5 }
+        return peak / (1.48 * blocks.sorted()[blocks.count / 4] + 0.5)
+    }
+
+    /// How much of the network to use for a line `height` source pixels tall (Vision's box)
+    /// with ink SNR `snr`. Lines 13 px and up are always the network's; smaller lines need clean
+    /// ink (SNR ≥ 32), otherwise they fade to the plain resample: blurry, but the letters it
+    /// shows are the ones in the photo.
+    static func cleanWeight(height: Double, snr: Double) -> Double {
+        func step(_ v: Double, _ lo: Double, _ hi: Double) -> Double {
+            let t = min(1, max(0, (v - lo) / (hi - lo)))
+            return t * t * (3 - 2 * t)
+        }
+        return max(step(height, 10, 13), step(snr, 22, 32))
+    }
+
     /// Re-renders text regions with the faithful network and feathers them into `output`.
     static func protect(output: inout RGBAImage, source: RGBAImage, regions: [CGRect], lineBoxes: [CGRect] = [], device: ComputeDevice,
                         progress: (Double) -> Bool) throws -> Int {
@@ -211,7 +269,8 @@ enum TextProtector {
         // vs 90.4 % for 8) at a third of the time (keyboard 480 px at 4x: 12 s vs 37 s); the
         // RealPLKSR Text model is fast enough for all 8. PIXORA_TEXT_TTA=1|2|4|8 overrides.
         let passes = Int(ProcessInfo.processInfo.environment["PIXORA_TEXT_TTA"] ?? "") ?? (spec.file == "Photo" ? 2 : 8)
-        let weight: (Double) -> Double = spec.file == "Photo" ? { _ in 1 } : { modelWeight(spread: $0) }
+        let sizeWeight: (Double) -> Double = spec.file == "Photo" ? { _ in 1 } : { modelWeight(spread: $0) }
+        let debug = ProcessInfo.processInfo.environment["PIXORA_DEBUG_TEXT"] != nil
         let sx = Double(output.width) / Double(source.width), sy = Double(output.height) / Double(source.height)
         let feather = max(2.0, 1.5 * sx)
 
@@ -229,17 +288,38 @@ enum TextProtector {
             // The passes box the same line slightly differently: use the median spread over
             // the boxes on that line.
             let spreads = inside.map { inkSpread(source, $0) }
-            let lineSpread = inside.indices.map { k -> Double in
+            let snrs = inside.map { inkSNR(source, $0) }
+            let median: ([Double], Int) -> Double = { vals, k in
                 let b = inside[k]
                 let same = inside.indices.filter { abs(inside[$0].midY - b.midY) < 0.35 * max(inside[$0].height, b.height)
                     && inside[$0].minX < b.maxX && b.minX < inside[$0].maxX }
-                let v = same.map { spreads[$0] }.sorted()
+                let v = same.map { vals[$0] }.sorted()
                 return v[v.count / 2]
             }
-            let wMin = lineSpread.map(weight).min() ?? 1
+            let heights = inside.map { Double($0.height) }
+            // Only lines of a paragraph fade (word-shaped, with another line of about the same size
+            // just above or below): Vision's stray boxes on leaves, foil rims and facades are
+            // low-SNR too, and fading them left soft patches in the texture.
+            func inParagraph(_ b: CGRect) -> Bool {
+                b.width >= 2.5 * b.height && lineBoxes.contains { o in
+                    let r = o.height / b.height, dy = abs(o.midY - b.midY)
+                    return r > 0.7 && r < 1.4 && dy > 0.6 * b.height && dy < 2.5 * b.height && o.minX < b.maxX && b.minX < o.maxX
+                }
+            }
+            let lineWeight = inside.indices.map { k in
+                sizeWeight(median(spreads, k)) * (inParagraph(inside[k]) ? cleanWeight(height: median(heights, k), snr: median(snrs, k)) : 1)
+            }
+            if debug {
+                let s = zip(inside, lineWeight).enumerated().map { k, e in
+                    String(format: "%.0f,%.0f:%.0fx%.1f snr %.1f w %.2f", e.0.minX, e.0.minY, e.0.width, e.0.height, snrs[k], e.1)
+                }.joined(separator: "; ")
+                FileHandle.standardError.write(Data("TEXT_WEIGHT \(x),\(y),\(w),\(h) \(s)\n".utf8))
+            }
+            // The noise fade stays on the lines themselves: the region reaches along the row to
+            // the frame edge on grainy signs, and fading all of it blurred trees and photos.
+            let wMin = inside.indices.map { sizeWeight(median(spreads, $0)) }.min() ?? 1
             var wMap = [Double](repeating: wMin, count: w * h)
-            for (b, ls) in zip(inside, lineSpread).sorted(by: { $0.1 > $1.1 }) { // smaller lines paint last and win
-                let wb = weight(ls)
+            for (b, wb) in zip(inside, lineWeight).sorted(by: { $0.1 > $1.1 }) { // lower weights paint last and win
                 let pad = b.height * 0.35
                 let x0 = max(0, Int(b.minX - pad) - x), x1 = min(w, Int(b.maxX + pad) - x)
                 let y0 = max(0, Int(b.minY - pad) - y), y1 = min(h, Int(b.maxY + pad) - y)

@@ -3,6 +3,14 @@
 Theo kiểu [Keep a Changelog](https://keepachangelog.com/vi/1.1.0/), đánh số [SemVer](https://semver.org/lang/vi/).
 Bản 0.x là bản phát triển nội bộ, dùng miễn phí, phi thương mại.
 
+## [Chưa phát hành]
+### Sửa lỗi
+- **Chữ thân nhỏ trên biển chụp ảnh bị vẽ thành chữ bịa** (vd biển đường mòn cc0_269 thu còn 500 px, chữ hoa ~4 px: "stolen cattle" thành "stolen cottle", "a region where" thành "a region uibere"): mọi model đều vẽ lại nét mờ, nhiễu hạt thành chữ giống chữ mà sai. Nay mỗi dòng chữ Vision tìm thấy được đo tỉ lệ tương phản mực/nhiễu nền (SNR): dòng nhỏ hơn 13 px có SNR thấp (biển chụp: 10–19; banner, màn hình, phím, biển tàu điện: 30–260) và nằm trong một đoạn văn thì chuyển sang bản phóng thường: mềm hơn nhưng đúng chữ trong ảnh. Bộ chấm chữ giữ nguyên (OCR 91,1%, PSNR 30,50 dB, độ nét 0,69); 6 ảnh thật 4x giữ nguyên hoặc nhỉnh hơn (cc0_269 +0,002 dB); lá cây, lông vẹt, giấy bạc, đường phố, chân dung: không đổi điểm ảnh nào.
+- Chưa xử lý: chữ Vision không tìm thấy (vd chú thích ảnh ~2,5 px trên cùng biển, tương phản ~10 mức sáng trên nhiễu ~3). Vision không thấy chúng cả khi phóng bicubic 3x/4x; bộ dò nét chữ thử nghiệm bắt nhầm lá cây và nếp áo trước khi bắt được chú thích, nên đã bỏ.
+
+### Thay đổi
+- **Tự cập nhật không cần token GitHub nữa**: repo Pixora đã công khai, nên app và `pixora update` đọc GitHub Releases và tải DMG mà không cần token. Token trong Keychain hoặc `PIXORA_GITHUB_TOKEN` vẫn được dùng nếu có (nâng giới hạn từ 60 lên 5.000 lần mỗi giờ); hết lượt thì app báo rõ giờ thử lại và cho nhập token ở nút **Dùng token GitHub…**. `pixora update --token` vẫn còn, không bắt buộc.
+
 ## [0.2.1] - 2026-10-20
 ### Kiểm tra
 - Chạy đủ các chế độ (Auto, Standard, High Fidelity, Art & CGI, Low Resolution, Recover, phục hồi mặt realistic/creative), tỉ lệ 1x–16x, `--width`/`--height`, mọi thanh tinh chỉnh, thiết bị gpu/ane/all/cpu, trên ảnh 1 px, 48 px, dải 2000 × 60, 3000 × 2000, ảnh xám, CMYK, nền trong suốt, palette, TIFF, WebP, HEIC; xuất PNG, JPEG, HEIC, TIFF. Tất cả chạy xong, giữ kênh trong suốt.

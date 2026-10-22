@@ -111,7 +111,7 @@ Nguồn ảnh mẫu ở [docs/samples/CREDITS.md](docs/samples/CREDITS.md) (CC0 
 
 | Mảng | Nội dung |
 |---|---|
-| **Chế độ AI** | **Auto** (tự đo nhiễu, độ nét, khối JPEG, khuôn mặt rồi chọn model); **Standard** (PixGamma Photo v1, DAT2 fine-tune riêng, và SPAN huấn luyện trên ảnh chụp thật bị nén, mờ, nhiễu; giữ đúng chất liệu, không vẽ vân giả); **High Fidelity** (trung thực, thanh Detail); **Art & CGI**; **Low Resolution** (khử nhiễu liên tục); **Recover** (tái tạo điểm ảnh bằng diffusion, thanh Creativity và Resemblance). |
+| **Chế độ AI** | **Auto** (tự đo nhiễu, độ nét, khối JPEG, khuôn mặt rồi chọn model); **Standard** (PixGamma Photo v2, DAT2 fine-tune riêng có GAN nhẹ cho lông, tóc, vải rõ hơn; vùng chữ vẫn dùng Photo v1 không GAN, và SPAN huấn luyện trên ảnh chụp thật bị nén, mờ, nhiễu; giữ đúng chất liệu, không vẽ vân giả); **High Fidelity** (trung thực, thanh Detail); **Art & CGI**; **Low Resolution** (khử nhiễu liên tục); **Recover** (tái tạo điểm ảnh bằng diffusion; tự nhận diện nội dung ảnh để viết mô tả, ví dụ "vẹt, lông chi tiết"; tự chọn độ bám ảnh gốc 85 cho động vật, tóc, da; có chốt an toàn cho ảnh có chữ, bản đồ, sản phẩm để không vẽ lại hình khối). |
 | **Chữ** | Apple Vision dò và đọc chữ, có tiếng Việt đủ dấu. Vùng chữ dựng lại bằng **model chữ riêng** (RealPLKSR fine-tune trên chữ Việt/Anh tự sinh), lấy trung bình 8 lượt lật/xoay cho nét thẳng. Đo cỡ từng dòng từ điểm ảnh: dòng quá nhỏ (chữ hoa dưới ~4 px) giữ bản trung thực. |
 | **Khuôn mặt** | Chân thực (CodeFormer, có thanh giữ nét mặt gốc) hoặc Sáng tạo (GFPGAN). Recover có thêm lượt riêng cho mắt và lông mày. |
 | **Kích thước** | Theo tỉ lệ 1–16x, theo chiều rộng hoặc chiều cao. Chọn mức gốc 2x/4x đủ dùng, chồng lượt khi trên 4x. Chia ô có ngữ cảnh nên không lộ đường ghép. |
@@ -131,7 +131,7 @@ pixgamma upscale ~/Anh/laptop -r -o ~/Anh/out -m std --scale 2 -f jpg --jq 92 --
 ```
 
 ```bash
-pixgamma upscale chan-dung.jpg -m rec --cr 75 --rs 40
+pixgamma upscale chan-dung.jpg -m rec --cr 75
 ```
 
 | Cờ | Ý nghĩa |
@@ -141,7 +141,7 @@ pixgamma upscale chan-dung.jpg -m rec --cr 75 --rs 40
 | `--dn`, `--sh`, `--cm`, `--dh` | Khử nhiễu, làm nét, khử nén JPEG, khử viền sáng (0–100) |
 | `--dt`, `--tx`, `--lc` | Detail (High Fidelity), kết cấu hạt, tương phản cục bộ |
 | `--fr`, `--frc`, `--frf` | Phục hồi khuôn mặt, kiểu `realistic`/`creative`, mức giữ mặt gốc |
-| `--cr`, `--rs`, `--prompt` | Recover: Creativity, Resemblance, prompt tùy chọn |
+| `--cr`, `--rs`, `--prompt` | Recover: Creativity, Resemblance (mặc định theo loại ảnh), prompt tùy chọn (mặc định tự mô tả) |
 | `--no-text-protect`, `--no-color-fix` | Tắt giữ chữ, tắt giữ màu gốc |
 | `-f`, `--jq`, `--res` | Định dạng, chất lượng JPEG/HEIC, DPI |
 | `-r`, `-o`, `--se`, `--am` | Đệ quy, thư mục ra, bỏ qua file đã có, thêm tên model vào tên file |
@@ -230,7 +230,7 @@ PixGamma (Swift package)
 PixGamma dùng các model mã nguồn mở, đã chuyển sang Core ML:
 
 - [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) (BSD-3-Clause), Xintao Wang và cộng sự
-- [4xBHI_dat2_real](https://huggingface.co/Phips/4xBHI_dat2_real) (gốc của model Photo), [2xNomosUni_span_multijpg_ldl](https://openmodeldb.info/models/2x-NomosUni-span-multijpg-ldl) và [4xNomosWebPhoto_RealPLKSR](https://openmodeldb.info/models/4x-NomosWebPhoto-RealPLKSR) (CC-BY-4.0), Philip Hofmann. Model Photo (PixGamma Photo v1) là bản fine-tune của 4xBHI_dat2_real, model chữ là bản fine-tune của 4xNomosWebPhoto_RealPLKSR.
+- [4xBHI_dat2_real](https://huggingface.co/Phips/4xBHI_dat2_real) (gốc của model Photo), [2xNomosUni_span_multijpg_ldl](https://openmodeldb.info/models/2x-NomosUni-span-multijpg-ldl) và [4xNomosWebPhoto_RealPLKSR](https://openmodeldb.info/models/4x-NomosWebPhoto-RealPLKSR) (CC-BY-4.0), Philip Hofmann. Model Photo (PixGamma Photo v2, train tiếp từ Photo v1 với GAN nhẹ) và PhotoV1 (dùng cho vùng chữ) là bản fine-tune của 4xBHI_dat2_real, model chữ là bản fine-tune của 4xNomosWebPhoto_RealPLKSR.
 - [GFPGAN](https://github.com/TencentARC/GFPGAN) (Apache-2.0), Tencent ARC
 - [CodeFormer](https://github.com/sczhou/CodeFormer) (S-Lab License 1.0, **chỉ phi thương mại**), Shangchen Zhou và cộng sự
 - Recover: [Realistic Vision V5.1](https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE) và [ControlNet 1.1 Tile](https://huggingface.co/lllyasviel/control_v11f1e_sd15_tile) (CreativeML OpenRAIL-M), [sd-vae-ft-mse](https://huggingface.co/stabilityai/sd-vae-ft-mse) (MIT), chuyển bằng [ml-stable-diffusion](https://github.com/apple/ml-stable-diffusion) của Apple

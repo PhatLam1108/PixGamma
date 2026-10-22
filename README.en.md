@@ -111,7 +111,7 @@ Sample sources: [docs/samples/CREDITS.md](docs/samples/CREDITS.md) (CC0 and publ
 
 | Area | Details |
 |---|---|
-| **AI modes** | **Auto** (measures noise, sharpness, JPEG blocking and faces, then picks a model); **Standard** (PixGamma Photo v1, our own DAT2 fine-tune, and SPAN trained on compressed, blurred, noisy real photos; true materials, no invented texture); **High Fidelity** (faithful, Detail slider); **Art & CGI**; **Low Resolution** (continuous denoise); **Recover** (diffusion pixel regeneration with Creativity and Resemblance sliders). |
+| **AI modes** | **Auto** (measures noise, sharpness, JPEG blocking and faces, then picks a model); **Standard** (PixGamma Photo v2, our own DAT2 fine-tune with a light GAN for crisper feathers, hair and fabric; text regions still use the GAN-free Photo v1, and SPAN trained on compressed, blurred, noisy real photos; true materials, no invented texture); **High Fidelity** (faithful, Detail slider); **Art & CGI**; **Low Resolution** (continuous denoise); **Recover** (diffusion pixel regeneration; describes the photo by itself, e.g. "parrot, detailed feathers"; picks resemblance 85 for animals, hair and skin; a safety lock keeps shapes on photos with text, maps or products). |
 | **Text** | Apple Vision finds and reads text, including Vietnamese with full diacritics. Text regions are rebuilt by a **dedicated text model** (RealPLKSR fine-tuned on synthetic Vietnamese/English text), averaged over 8 flips/rotations for straight strokes. Line size is measured from the pixels: lines too small (capitals under ~4 px) stay faithful. |
 | **Faces** | Realistic (CodeFormer, identity slider) or Creative (GFPGAN). Recover adds dedicated eye and eyebrow passes. |
 | **Size** | 1–16x scale, or target width/height. Uses the smallest 2x/4x base that suffices, stacks passes beyond 4x. Context-padded tiles, no seams. |
@@ -131,7 +131,7 @@ pixgamma upscale ~/Pictures/laptop -r -o ~/Pictures/out -m std --scale 2 -f jpg 
 ```
 
 ```bash
-pixgamma upscale portrait.jpg -m rec --cr 75 --rs 40
+pixgamma upscale portrait.jpg -m rec --cr 75
 ```
 
 | Flag | Meaning |
@@ -141,7 +141,7 @@ pixgamma upscale portrait.jpg -m rec --cr 75 --rs 40
 | `--dn`, `--sh`, `--cm`, `--dh` | Denoise, sharpen, JPEG cleanup, dehalo (0–100) |
 | `--dt`, `--tx`, `--lc` | Detail (High Fidelity), grain, local contrast |
 | `--fr`, `--frc`, `--frf` | Face recovery, `realistic`/`creative`, identity strength |
-| `--cr`, `--rs`, `--prompt` | Recover: Creativity, Resemblance, optional prompt |
+| `--cr`, `--rs`, `--prompt` | Recover: Creativity, Resemblance (default by scene), optional prompt (default: automatic description) |
 | `--no-text-protect`, `--no-color-fix` | Disable text protection, disable colour restore |
 | `-f`, `--jq`, `--res` | Format, JPEG/HEIC quality, DPI |
 | `-r`, `-o`, `--se`, `--am` | Recursive, output folder, skip existing, append model to file name |
@@ -219,7 +219,7 @@ PixGamma (Swift package)
 ## Models and credits
 
 - [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) (BSD-3-Clause), Xintao Wang et al.
-- [4xBHI_dat2_real](https://huggingface.co/Phips/4xBHI_dat2_real) (base of the Photo model), [2xNomosUni_span_multijpg_ldl](https://openmodeldb.info/models/2x-NomosUni-span-multijpg-ldl) and [4xNomosWebPhoto_RealPLKSR](https://openmodeldb.info/models/4x-NomosWebPhoto-RealPLKSR) (CC-BY-4.0), Philip Hofmann. The Photo model (PixGamma Photo v1) is a fine-tune of 4xBHI_dat2_real; the text model is a fine-tune of 4xNomosWebPhoto_RealPLKSR.
+- [4xBHI_dat2_real](https://huggingface.co/Phips/4xBHI_dat2_real) (base of the Photo model), [2xNomosUni_span_multijpg_ldl](https://openmodeldb.info/models/2x-NomosUni-span-multijpg-ldl) and [4xNomosWebPhoto_RealPLKSR](https://openmodeldb.info/models/4x-NomosWebPhoto-RealPLKSR) (CC-BY-4.0), Philip Hofmann. The Photo model (PixGamma Photo v2, Photo v1 trained further with a light GAN) and PhotoV1 (used for text) are fine-tunes of 4xBHI_dat2_real; the text model is a fine-tune of 4xNomosWebPhoto_RealPLKSR.
 - [GFPGAN](https://github.com/TencentARC/GFPGAN) (Apache-2.0), Tencent ARC
 - [CodeFormer](https://github.com/sczhou/CodeFormer) (S-Lab License 1.0, **non-commercial only**), Shangchen Zhou et al.
 - Recover: [Realistic Vision V5.1](https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE) and [ControlNet 1.1 Tile](https://huggingface.co/lllyasviel/control_v11f1e_sd15_tile) (CreativeML OpenRAIL-M), [sd-vae-ft-mse](https://huggingface.co/stabilityai/sd-vae-ft-mse) (MIT), converted with Apple's [ml-stable-diffusion](https://github.com/apple/ml-stable-diffusion)

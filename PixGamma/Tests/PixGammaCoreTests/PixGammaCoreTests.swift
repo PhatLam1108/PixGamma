@@ -37,6 +37,36 @@ final class PixGammaCoreTests: XCTestCase {
         XCTAssertEqual(ty, -4, accuracy: 1e-6)
     }
 
+    func testFaceRestoreKeepsMonochromeChroma() {
+        // Sepia ramp (chroma follows brightness) vs. the same ramp with coloured blocks.
+        func image(colour: Bool) -> RGBAImage {
+            var px = [UInt8](repeating: 255, count: 64 * 64 * 4)
+            for y in 0..<64 {
+                for x in 0..<64 {
+                    let l = Double(x) / 63 * 200 + 30
+                    var c = colour && (y / 16) % 2 == 0
+                        ? [[220.0, 60, 50], [40, 160, 70], [50, 80, 210], [200, 190, 40]][x / 16]
+                        : [l * 1.07, l * 0.98, l * 0.8]
+                    c = c.map { min(255, $0 + Double((x * 7 + y * 13) % 5) - 2) }   // scan noise
+                    for k in 0..<3 { px[(y * 64 + x) * 4 + k] = UInt8(c[k]) }
+                }
+            }
+            return RGBAImage(width: 64, height: 64, pixels: px)
+        }
+        XCTAssertGreaterThan(FaceRestorer.monochromeWeight(image(colour: false)), 0.99)
+        XCTAssertLessThan(FaceRestorer.monochromeWeight(image(colour: true)), 0.01)
+
+        // Monochrome: a bluish restored eye only brightens/darkens, the sepia tint stays.
+        let old = SIMD3(120.0, 110, 90), blue = SIMD3(70.0, 110, 170)
+        let m = FaceRestorer.blend(old: old, restored: blue, mono: 1)
+        XCTAssertEqual(m.x - m.y, old.x - old.y, accuracy: 1e-9)
+        XCTAssertEqual(m.z - m.y, old.z - old.y, accuracy: 1e-9)
+        let luma = SIMD3(0.299, 0.587, 0.114)
+        XCTAssertEqual((m * luma).sum(), (blue * luma).sum(), accuracy: 1e-9)
+        // Colour photos take the restored pixel unchanged.
+        XCTAssertEqual(FaceRestorer.blend(old: old, restored: blue, mono: 0), blue)
+    }
+
     func testPreserveColorRemovesTint() {
         let src = RGBAImage(width: 8, height: 8, pixels: [UInt8](repeating: 128, count: 8 * 8 * 4))
         var tinted = src.resized(width: 32, height: 32)

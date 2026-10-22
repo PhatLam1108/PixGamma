@@ -95,6 +95,7 @@ public enum FaceRestorer {
             extra[d.name] = MLFeatureValue(multiArray: a)
         }
 
+        let mono = monochromeWeight(image)
         for face in faces {
             let (a, b, tx, ty) = similarity(from: face.points, to: template)
             // Inverse transform: crop → image.
@@ -109,7 +110,7 @@ public enum FaceRestorer {
                 throw PixGammaError.modelIO("FaceRestore output")
             }
             matchColor(restored, to: crop)
-            paste(restored, into: &image, a: a, b: b, tx: tx, ty: ty, inverse: (ia, ib, itx, ity), strength: strength)
+            paste(restored, into: &image, a: a, b: b, tx: tx, ty: ty, inverse: (ia, ib, itx, ity), strength: strength, mono: mono)
         }
     }
 
@@ -192,8 +193,64 @@ public enum FaceRestorer {
         }
     }
 
+    /// How black-and-white (or single-toned, e.g. sepia) the photo is: 1 = monochrome, 0 = colour.
+    /// In a toned print chroma is a function of brightness alone, so it is fitted against luma
+    /// (quadratic) over the whole image; the leftover chroma is what real colours add.
+    static func monochromeWeight(_ image: RGBAImage) -> Double {
+        let step = max(1, max(image.width, image.height) / 256)
+        var samples: [(y: Double, cb: Double, cr: Double)] = []
+        for y in stride(from: 0, to: image.height, by: step) {
+            for x in stride(from: 0, to: image.width, by: step) {
+                let p = (y * image.width + x) * 4
+                let r = Double(image.pixels[p]), g = Double(image.pixels[p + 1]), b = Double(image.pixels[p + 2])
+                let l = 0.299 * r + 0.587 * g + 0.114 * b
+                samples.append((l / 255, b - l, r - l))
+            }
+        }
+        guard samples.count > 3 else { return 0 }
+        // Normal equations for c ≈ k0 + k1·y + k2·y².
+        var m = [[Double]](repeating: [0, 0, 0], count: 3), vb = [0.0, 0, 0], vr = [0.0, 0, 0]
+        for s in samples {
+            let f = [1, s.y, s.y * s.y]
+            for i in 0..<3 {
+                for j in 0..<3 { m[i][j] += f[i] * f[j] }
+                vb[i] += f[i] * s.cb; vr[i] += f[i] * s.cr
+            }
+        }
+        func solve(_ v: [Double]) -> [Double] {
+            func det(_ a: [[Double]]) -> Double {
+                a[0][0] * (a[1][1] * a[2][2] - a[1][2] * a[2][1]) - a[0][1] * (a[1][0] * a[2][2] - a[1][2] * a[2][0])
+                    + a[0][2] * (a[1][0] * a[2][1] - a[1][1] * a[2][0])
+            }
+            let d = det(m)
+            guard abs(d) > 1e-9 else { return [v[0] / m[0][0], 0, 0] }   // flat image: mean only
+            return (0..<3).map { k in det(m.indices.map { i in (0..<3).map { j in j == k ? v[i] : m[i][j] } }) / d }
+        }
+        let kb = solve(vb), kr = solve(vr)
+        var resid = 0.0
+        for s in samples {
+            let f = [1, s.y, s.y * s.y]
+            let eb = s.cb - (kb[0] * f[0] + kb[1] * f[1] + kb[2] * f[2])
+            let er = s.cr - (kr[0] * f[0] + kr[1] * f[1] + kr[2] * f[2])
+            resid += (eb * eb + er * er).squareRoot()
+        }
+        resid /= Double(samples.count)
+        // Scanned prints stay under ~8 (JPEG/scan noise); colour photos are usually 15+.
+        let t = min(1, max(0, (resid - 9) / 6))
+        return 1 - t * t * (3 - 2 * t)
+    }
+
+    /// The colour pasted for one pixel: the restored face, except that on monochrome photos only
+    /// its luminance is taken and the existing pixel keeps its own chroma (face models colourise).
+    static func blend(old: SIMD3<Double>, restored: SIMD3<Double>, mono: Double) -> SIMD3<Double> {
+        guard mono > 0 else { return restored }
+        let luma = SIMD3(0.299, 0.587, 0.114)
+        let lumaOnly = old + SIMD3(repeating: (restored * luma).sum() - (old * luma).sum())
+        return restored + (lumaOnly - restored) * mono
+    }
+
     private static func paste(_ pb: CVPixelBuffer, into image: inout RGBAImage, a: Double, b: Double, tx: Double, ty: Double,
-                              inverse: (Double, Double, Double, Double), strength: Double) {
+                              inverse: (Double, Double, Double, Double), strength: Double, mono: Double) {
         CVPixelBufferLockBaseAddress(pb, .readOnly)
         defer { CVPixelBufferUnlockBaseAddress(pb, .readOnly) }
         let fmt = CVPixelBufferGetPixelFormatType(pb)
@@ -229,11 +286,11 @@ public enum FaceRestorer {
                 }
                 let top = px(x0, y0) + (px(x0 + 1, y0) - px(x0, y0)) * fx
                 let bot = px(x0, y0 + 1) + (px(x0 + 1, y0 + 1) - px(x0, y0 + 1)) * fx
-                let c = top + (bot - top) * fy
                 let p = (y * w + x) * 4
+                let old = SIMD3(Double(image.pixels[p]), Double(image.pixels[p + 1]), Double(image.pixels[p + 2]))
+                let c = blend(old: old, restored: top + (bot - top) * fy, mono: mono)
                 for (k, v) in [c.x, c.y, c.z].enumerated() {
-                    let old = Double(image.pixels[p + k])
-                    image.pixels[p + k] = UInt8(max(0, min(255, (old + (v - old) * alpha).rounded())))
+                    image.pixels[p + k] = UInt8(max(0, min(255, (old[k] + (v - old[k]) * alpha).rounded())))
                 }
             }
         }

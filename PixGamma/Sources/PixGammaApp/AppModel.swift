@@ -44,7 +44,9 @@ final class AppModel: ObservableObject {
     @Published var compression: Double = 0
     @Published var detail: Double = 35
     @Published var creativity: Double = 75
-    @Published var resemblance: Double = 40
+    @Published var resemblance: Double = 85
+    /// Recover picks resemblance from the scene (85 for animals, plants, portraits; 40 otherwise).
+    @Published var autoResemblance = true
     @Published var texture: Double = 25
     @Published var contrast: Double = 30
     @Published var protectText = true
@@ -148,7 +150,7 @@ final class AppModel: ObservableObject {
             o.contrast = contrast / 100
         }
         o.creativity = creativity / 100
-        o.resemblance = resemblance / 100
+        o.resemblance = autoResemblance ? nil : resemblance / 100
         o.protectText = protectText
         o.faceStyle = faceStyle
         o.faceFidelity = faceFidelity / 100

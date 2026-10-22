@@ -41,7 +41,7 @@ struct Upscale: ParsableCommand {
     @Option(name: [.customLong("cr"), .customLong("creativity")], help: "Recover: mức tái tạo chi tiết 0–100 (mặc định 75).")
     var creativity: Double?
 
-    @Option(name: [.customLong("rs"), .customLong("resemblance")], help: "Recover: độ bám ảnh gốc 0–100 (mặc định 40).")
+    @Option(name: [.customLong("rs"), .customLong("resemblance")], help: "Recover: độ bám ảnh gốc 0–100 (mặc định: 85 cho động vật, cây, chân dung; 40 cho ảnh khác).")
     var resemblance: Double?
 
     @Option(help: "Recover: mô tả nội dung ảnh (tiếng Anh), ví dụ \"laptop keyboard close-up\".")
@@ -173,6 +173,8 @@ struct Upscale: ParsableCommand {
                 if !quiet {
                     log("  → \(dest.path)\n    \(r.mode.displayName) · \(r.inputSize[0])×\(r.inputSize[1]) → \(r.outputSize[0])×\(r.outputSize[1]) · "
                         + "model \(r.passes.joined(separator: "+")) · chữ \(r.textRegions) vùng · khuôn mặt \(r.facesRestored)\(r.faceStyle.map { " (\($0.rawValue))" } ?? "") · \(String(format: "%.1f", r.seconds))s")
+                    if let p = r.prompt { log("    mô tả: \(p)" + (r.resemblance.map { " · bám ảnh gốc \(Int(($0 * 100).rounded()))" } ?? "")) }
+                    if let g = r.recoverGuard { log("    chốt an toàn: \(g)") }
                 }
                 var entry: [String: Any] = ["input": file.url.path, "output": dest.path]
                 if let obj = try? JSONSerialization.jsonObject(with: JSONEncoder().encode(r)) { entry["report"] = obj }

@@ -268,8 +268,8 @@ enum TextProtector {
         // Self-ensemble size. With Photo v1, 2 passes (as is + 180° turn) read best (OCR 91.1 %
         // vs 90.4 % for 8) at a third of the time (keyboard 480 px at 4x: 12 s vs 37 s); the
         // RealPLKSR Text model is fast enough for all 8. PIXGAMMA_TEXT_TTA=1|2|4|8 overrides.
-        let passes = Int(Env.get("TEXT_TTA") ?? "") ?? (spec.file == "Photo" ? 2 : 8)
-        let sizeWeight: (Double) -> Double = spec.file == "Photo" ? { _ in 1 } : { modelWeight(spread: $0) }
+        let passes = Int(Env.get("TEXT_TTA") ?? "") ?? (spec.file == "PhotoV1" ? 2 : 8)
+        let sizeWeight: (Double) -> Double = spec.file == "PhotoV1" ? { _ in 1 } : { modelWeight(spread: $0) }
         let debug = Env.isSet("DEBUG_TEXT")
         let sx = Double(output.width) / Double(source.width), sy = Double(output.height) / Double(source.height)
         let feather = max(2.0, 1.5 * sx)

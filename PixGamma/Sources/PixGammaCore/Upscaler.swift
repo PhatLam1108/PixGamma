@@ -43,8 +43,9 @@ public struct UpscaleOptions: Codable, Sendable {
     public var preserveColor = true
     /// Recover mode: how much detail diffusion may redraw, 0…1.
     public var creativity: Double = 0.75
-    /// Recover mode: how closely the redraw follows the input, 0…1.
-    public var resemblance: Double = 0.4
+    /// Recover mode: how closely the redraw follows the input, 0…1. nil = by scene: 0.85 for animals, plants and portraits (feathers and hair then follow the
+    /// photo's own layout instead of being reinvented), 0.4 otherwise.
+    public var resemblance: Double? = nil
     /// Recover mode: optional text prompt describing the subject.
     public var prompt: String? = nil
     /// GPU is fastest on Apple Silicon Max/Ultra for these conv nets (measured on M2 Ultra).
@@ -71,6 +72,12 @@ public struct UpscaleReport: Codable, Sendable {
     /// Text read from the image (Vietnamese and English), top to bottom.
     public var text: [String]?
     public var creativity: Double?
+    /// Recover: the prompt diffusion used (the user's, or one built from what Vision sees).
+    public var prompt: String?
+    /// Recover: why creativity was capped (text, maps, products), shown to the user.
+    public var recoverGuard: String?
+    /// Recover: the resemblance diffusion ran with, after the scene default and safety caps.
+    public var resemblance: Double?
     public var faceStyle: FaceStyle?
     public var facesRestored: Int
     public var seconds: Double
@@ -208,6 +215,9 @@ public enum Upscaler {
         // Recover: diffusion redraws fine detail; text and faces keep the network's pixels.
         var textRects: [CGRect]?
         var detection: TextProtector.Detection?
+        var usedPrompt: String?
+        var recoverGuard: String?
+        var usedResemblance: Double?
         if mode == .recover && !passes.isEmpty {
             guard GenerativeRefiner.isAvailable else { throw PixGammaError.modelNotFound(GenerativeRefiner.folder) }
             let sx = Double(targetW) / Double(source.width), sy = Double(targetH) / Double(source.height)
@@ -217,9 +227,26 @@ public enum Upscaler {
             detection = det
             let found = det?.regions ?? []
             textRects = found
-            let protect = found.map { CGRect(x: $0.minX * sx, y: $0.minY * sy, width: $0.width * sx, height: $0.height * sy) }
+            // Vision boxes lines it can read and skips faint or tiny ones in between, which
+            // diffusion then rewrote into fake letters: protect whole paragraphs instead.
+            let blocks = textBlocks(found + (det?.lineBoxes ?? []), width: source.width, height: source.height)
+            let protect = blocks.map { CGRect(x: $0.minX * sx, y: $0.minY * sy, width: $0.width * sx, height: $0.height * sy) }
             let eyeFaces = FaceRestorer.detect(source).map { $0.scaled(sx) }
-            let prompt = options.prompt ?? (eyeFaces.isEmpty ? nil : GenerativeRefiner.portraitPrompt)
+            let scene = SceneDescriber.describe(source)
+            let prompt = options.prompt ?? (eyeFaces.isEmpty ? scene.prompt : GenerativeRefiner.portraitPrompt)
+            usedPrompt = prompt ?? GenerativeRefiner.defaultPrompt
+            // Safety caps: low creativity plus the structure lock (resemblance > 0.7) keeps every
+            // shape from the photo network and lets diffusion add only fine texture.
+            let textShare = blocks.reduce(0) { $0 + $1.width * $1.height } / Double(source.width * source.height)
+            var creativity = options.creativity
+            var resemblance = options.resemblance ?? (!eyeFaces.isEmpty || scene.kind == .organic ? 0.85 : 0.4)
+            if scene.kind == .graphic || textShare > 0.08 {
+                creativity = min(creativity, 0.3); resemblance = max(resemblance, 0.85)
+                recoverGuard = "ảnh có chữ, bản đồ hoặc đồ hoạ: chỉ thêm kết cấu mịn, giữ nguyên hình"
+            } else if scene.kind == .product {
+                creativity = min(creativity, 0.45); resemblance = max(resemblance, 0.75)
+                recoverGuard = "ảnh sản phẩm: giữ nguyên hình khối, chỉ làm rõ chất liệu"
+            }
             // Face skin: brows to chin, slightly enlarged to cover the cheeks and jaw.
             let skin = eyeFaces.map { f -> CGRect in
                 let b = f.faceBox
@@ -231,7 +258,8 @@ public enum Upscaler {
                 // brow hairs are drawn freely.
                 return [f.leftEye, f.rightEye].map { CGRect(x: $0.x - d * 0.45, y: $0.y - d * 0.8, width: d * 0.9, height: d * 1.05) }
             }
-            try GenerativeRefiner.refine(&work, creativity: options.creativity, resemblance: options.resemblance, prompt: prompt, skin: skin, eyes: eyes,
+            usedResemblance = resemblance
+            try GenerativeRefiner.refine(&work, creativity: creativity, resemblance: resemblance, prompt: prompt, skin: skin, eyes: eyes,
                                          protect: protect, device: options.device) {
                 progress("Tái tạo chi tiết (diffusion)", $0)
             }
@@ -289,10 +317,31 @@ public enum Upscaler {
             denoise: denoise, sharpen: sharpen, compression: compression, faceRecovery: faceStrength,
             detail: detail, texture: texture, contrast: contrast, textRegions: textRegions,
             text: (detection?.lines.isEmpty ?? true) ? nil : detection?.lines,
-            creativity: mode == .recover ? options.creativity : nil, faceStyle: restored > 0 ? faceStyle : nil,
+            creativity: mode == .recover ? options.creativity : nil, prompt: usedPrompt, recoverGuard: recoverGuard, resemblance: usedResemblance, faceStyle: restored > 0 ? faceStyle : nil,
             facesRestored: restored, seconds: Date().timeIntervalSince(start), analysis: analysis
         )
         return UpscaleResult(image: work, report: report)
+    }
+
+    /// Text lines grown by most of a line height and merged, so the gaps between boxed lines
+    /// (lines Vision skipped) are covered too. Source pixels.
+    static func textBlocks(_ boxes: [CGRect], width: Int, height: Int) -> [CGRect] {
+        var blocks = boxes.filter { $0.width > 0 && $0.height > 0 }.map { b -> CGRect in
+            // One skipped line between two boxed ones leaves a gap of two line heights.
+            let g = max(4, b.height * 1.1)
+            return b.insetBy(dx: -g * 0.5, dy: -g)
+        }
+        var merged = true
+        while merged {
+            merged = false
+            outer: for i in blocks.indices {
+                for j in blocks.indices where j > i && blocks[i].intersects(blocks[j]) {
+                    blocks[i] = blocks[i].union(blocks[j]); blocks.remove(at: j); merged = true; break outer
+                }
+            }
+        }
+        let frame = CGRect(x: 0, y: 0, width: width, height: height)
+        return blocks.map { $0.intersection(frame) }.filter { !$0.isNull }
     }
 
     /// Low Res uses discrete denoise variants when the dynamic-input model is unavailable.

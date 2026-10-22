@@ -853,7 +853,10 @@ struct RecoverCard: View {
         VStack(alignment: .leading, spacing: 12) {
             CardTitle(text: "Recover")
             AccentSlider(title: "Creativity", value: $model.creativity, hint: "Cao: vẽ lại nhiều chi tiết hơn (da, tóc, lông).")
+            ToggleRow(title: "Tự chọn độ bám ảnh gốc", subtitle: "85 cho động vật, tóc, da; 40 cho ảnh khác", isOn: $model.autoResemblance)
             AccentSlider(title: "Resemblance", value: $model.resemblance, hint: "Cao: bám sát ảnh gốc hơn. Trên 70 giữ nguyên chữ.")
+                .disabled(model.autoResemblance)
+                .opacity(model.autoResemblance ? 0.45 : 1)
         }
         .card()
     }

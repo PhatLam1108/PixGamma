@@ -193,4 +193,22 @@ final class PixGammaCoreTests: XCTestCase {
         XCTAssertEqual(info?["CFBundleShortVersionString"] as? String, APIServer.version)
         XCTAssertFalse(FileManager.default.fileExists(atPath: target.path + ".old"))
     }
+
+    func testSceneDescriberNamesSubjectAndTexture() {
+        let parrot = SceneDescriber.prompt(labels: [("animal", 0.96), ("bird", 0.96), ("parrot", 0.96)])
+        XCTAssertEqual(parrot, "high quality photograph of a parrot, detailed feathers with fine barbs and shafts, sharp focus, natural light")
+        // A printed T-shirt: fabric first, and low-confidence scenery labels are ignored.
+        let shirt = SceneDescriber.prompt(labels: [("people", 0.84), ("clothing", 0.52), ("structure", 0.45), ("rocks", 0.26)])
+        XCTAssertEqual(shirt?.hasPrefix("high quality photograph of a garment, fine fabric weave"), true)
+        XCTAssertFalse(shirt?.contains("stone") ?? true)
+        XCTAssertNil(SceneDescriber.prompt(labels: [("sign", 0.2)]))
+        // Safety kinds: a sign behind people is graphic; leather at low confidence is a product.
+        XCTAssertEqual(SceneDescriber.kind(labels: [("people", 0.84), ("sign", 0.43)]), .graphic)
+        XCTAssertEqual(SceneDescriber.kind(labels: [("material", 0.15), ("textile", 0.15)]), .product)
+        XCTAssertEqual(SceneDescriber.kind(labels: [("bird", 0.96)]), .organic)
+        // Two lines with a skipped line between them merge into one protected block.
+        let blocks = Upscaler.textBlocks([CGRect(x: 10, y: 10, width: 100, height: 8), CGRect(x: 10, y: 34, width: 100, height: 8)],
+                                         width: 200, height: 200)
+        XCTAssertEqual(blocks.count, 1)
+    }
 }

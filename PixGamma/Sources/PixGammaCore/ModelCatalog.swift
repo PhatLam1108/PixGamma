@@ -24,7 +24,7 @@ public enum EnhanceMode: String, CaseIterable, Codable, Sendable {
     public var summary: String {
         switch self {
         case .auto: return "Phân tích ảnh rồi tự chọn model và độ mạnh"
-        case .standard: return "Ảnh chụp: giữ đúng chất liệu lông, da, vải, không vẽ vân giả (PixGamma Photo v1, SPAN 2x)"
+        case .standard: return "Ảnh chụp: giữ đúng chất liệu lông, da, vải, không vẽ vân giả (PixGamma Photo v2, SPAN 2x)"
         case .fidelity: return "Chân thực nhất, không bịa chi tiết — thanh Detail trộn RealESRNet ↔ RealESRGAN"
         case .art: return "Tranh vẽ, anime, đồ hoạ, CGI — nét sạch, mảng màu phẳng (anime_6B)"
         case .lowres: return "Ảnh nhỏ, nhiều nhiễu, ảnh web — có thanh khử nhiễu liên tục (general-x4v3 + wdn)"
@@ -58,8 +58,9 @@ public enum ModelCatalog {
     public static func networks(for mode: EnhanceMode) -> [ModelSpec] {
         switch mode {
         case .auto, .standard:
-            // Photo: PixGamma Photo v1, DAT2 fine-tuned from 4xBHI_dat2_real (the best of ten public 4x
-            // models on PixGamma's photo set) on degraded real photos and text; Photo2x: SPAN, best at 2x.
+            // Photo: PixGamma Photo v2, Photo v1 (DAT2 fine-tuned from 4xBHI_dat2_real) trained further
+            // with a light GAN (training/configs/photo2gan.yml) for finer feathers, hair and fabric:
+            // DISTS 0.164 vs 0.165 on the held-out set, 0.170 vs 0.183 on sharp photos. Photo2x: SPAN.
             // Real-ESRGAN x4plus/x2plus remain as the fallback when they are not installed.
             if ModelStore.shared.isAvailable("Photo") {
                 return ModelStore.shared.isAvailable("Photo2x")
@@ -83,20 +84,21 @@ public enum ModelCatalog {
 
     public static let face = ModelSpec(file: "FaceRestore", scale: 1, tile: 512)
 
-    /// Text regions (run with the 8-way ensemble): PixGamma Photo v1, which was trained with text
+    /// Text regions (run with the 8-way ensemble): PixGamma Photo v1 (PhotoV1, no GAN, so it never
+    /// invents strokes; Photo v2's GAN is kept off text), which was trained with text
     /// tiles and beats the Text model on the text benchmark (OCR 90.4 vs 89.2 %, PSNR 30.7 vs
     /// 29.2 dB, sharpness 0.69 vs 0.58) and on real keyboards; then PixGamma's RealPLKSR Text model,
     /// then RealESRNet. PIXGAMMA_TEXT_MODEL=<file> forces another 4x model (benchmarks).
     public static var text: ModelSpec {
         let env = Env.get("TEXT_MODEL")
-        for f in [env, "Photo", "Text"].compactMap({ $0 }) where ModelStore.shared.isAvailable(f) {
+        for f in [env, "PhotoV1", "Text"].compactMap({ $0 }) where ModelStore.shared.isAvailable(f) {
             return ModelSpec(file: f, scale: 4, tile: 256)
         }
         return networks(for: .fidelity)[0]
     }
 
     public static var allFiles: [String] {
-        ["Photo", "Photo2x", "Text", "Standard", "Standard2x", "HighFidelity", "ArtCGI", "LowRes", "FaceRealistic", "FaceRestore"]
+        ["Photo", "PhotoV1", "Photo2x", "Text", "Standard", "Standard2x", "HighFidelity", "ArtCGI", "LowRes", "FaceRealistic", "FaceRestore"]
     }
 }
 

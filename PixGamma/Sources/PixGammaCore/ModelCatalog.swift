@@ -60,10 +60,14 @@ public enum ModelCatalog {
         case .auto, .standard:
             // Photo: PixGamma Photo v2, Photo v1 (DAT2 fine-tuned from 4xBHI_dat2_real) trained further
             // with a light GAN (training/configs/photo2gan.yml) for finer feathers, hair and fabric:
-            // DISTS 0.164 vs 0.165 on the held-out set, 0.170 vs 0.183 on sharp photos. Photo2x: SPAN.
+            // DISTS 0.164 vs 0.165 on the held-out set, 0.170 vs 0.183 on sharp photos.
+            // 2x and 3x also run Photo at 4x and scale down: on 8 clean product shots, AI images and
+            // banners (half size, back to 2x) that scored 35.4 dB / SSIM 0.968 against 34.5 / 0.960
+            // for the SPAN 2x model, which softened detail (0.70 of the original's sharpness).
+            // PIXGAMMA_FAST_2X=1 keeps the faster SPAN model (Photo2x) for 2x.
             // Real-ESRGAN x4plus/x2plus remain as the fallback when they are not installed.
             if ModelStore.shared.isAvailable("Photo") {
-                return ModelStore.shared.isAvailable("Photo2x")
+                return Env.isSet("FAST_2X") && ModelStore.shared.isAvailable("Photo2x")
                     ? [ModelSpec(file: "Photo2x", scale: 2, tile: 256), ModelSpec(file: "Photo", scale: 4, tile: 256)]
                     : [ModelSpec(file: "Photo", scale: 4, tile: 256)]
             }

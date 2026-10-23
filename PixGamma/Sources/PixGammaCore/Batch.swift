@@ -53,7 +53,16 @@ public enum Batch {
             dir = input.deletingLastPathComponent()
             if naming.prefix.isEmpty && naming.suffix.isEmpty && !naming.appendModel { name += "-pixgamma" }
         }
-        return dir.appendingPathComponent(name).appendingPathExtension(resolved.fileExtension)
+        let url = dir.appendingPathComponent(name).appendingPathExtension(resolved.fileExtension)
+        // The output folder may be the source's own folder (or resolve to it), so check the final path too.
+        guard isSameFile(url, input) else { return url }
+        return dir.appendingPathComponent(name + "-pixgamma").appendingPathExtension(resolved.fileExtension)
+    }
+
+    /// Path comparison that follows symlinks and ignores case (APFS is case-insensitive by default).
+    static func isSameFile(_ a: URL, _ b: URL) -> Bool {
+        func key(_ u: URL) -> String { u.standardizedFileURL.resolvingSymlinksInPath().path.lowercased() }
+        return key(a) == key(b)
     }
 
     public static func sizeTag(_ size: OutputSize) -> String {

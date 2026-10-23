@@ -82,6 +82,19 @@ final class PixGammaCoreTests: XCTestCase {
         XCTAssertEqual(out.lastPathComponent, "photo-pixgamma.jpg")
     }
 
+    func testBatchNamingAddsSuffixWhenOutputFolderIsSourceFolder() {
+        let u = URL(fileURLWithPath: "/tmp/photo.jpg")
+        let same = Batch.outputURL(for: u, relative: "photo.jpg", outputDirectory: URL(fileURLWithPath: "/tmp/"), format: .preserve,
+                                   naming: NamingOptions(), modeName: "standard", sizeTag: "4x")
+        XCTAssertEqual(same.lastPathComponent, "photo-pixgamma.jpg")
+        let other = Batch.outputURL(for: u, relative: "photo.jpg", outputDirectory: URL(fileURLWithPath: "/tmp/out"), format: .preserve,
+                                    naming: NamingOptions(), modeName: "standard", sizeTag: "4x")
+        XCTAssertEqual(other.lastPathComponent, "photo.jpg")
+        let converted = Batch.outputURL(for: u, relative: "photo.jpg", outputDirectory: URL(fileURLWithPath: "/tmp"), format: .png,
+                                        naming: NamingOptions(), modeName: "standard", sizeTag: "4x")
+        XCTAssertEqual(converted.lastPathComponent, "photo.png")
+    }
+
     func testHTTPRequestWaitsForFullBody() {
         let head = "POST /v1/upscale?scale=2&mode=art HTTP/1.1\r\nContent-Length: 4\r\n\r\n"
         XCTAssertNil(Request.parse(Data((head + "ab").utf8)))

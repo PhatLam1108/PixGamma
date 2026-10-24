@@ -23,13 +23,14 @@ License text: https://creativecommons.org/licenses/by/4.0/
 
 | PixGamma model | Original model | Author | License | Source |
 |---|---|---|---|---|
-| Photo.mlpackage | PixGamma Photo v3: PixGamma fine-tune of 4x-UltraSharpV2 (DAT2) on filtered CC0 photos, clean bicubic tiles and synthetic text (`training/configs/photo3_us2.yml`) | Fine-tune: PixGamma; base model: Kim2091 | CC-BY-NC-SA-4.0 | Base: https://huggingface.co/Kim2091/UltraSharpV2 |
+| Photo.mlpackage | PixGamma Photo v4: Photo v3 trained further on CC0 close-ups of feathers, hair and skin with a very light GAN (`training/configs/photo4.yml`). Photo v3: PixGamma fine-tune of 4x-UltraSharpV2 (DAT2) on filtered CC0 photos, clean bicubic tiles and synthetic text (`training/configs/photo3_us2.yml`) | Fine-tune: PixGamma; base model: Kim2091 | CC-BY-NC-SA-4.0 | Base: https://huggingface.co/Kim2091/UltraSharpV2 |
 
-Changes: 15,000 iterations from the UltraSharpV2 weights (Charbonnier + MS-SSIM + LDL + focal frequency + DISTS 0.25, no GAN),
+Changes: Photo v3 is 15,000 iterations from the UltraSharpV2 weights (Charbonnier + MS-SSIM + LDL + focal frequency + DISTS 0.25, no GAN);
+Photo v4 adds 12,000 iterations from v3 with the same losses plus a vanilla GAN at 0.03 (U-Net discriminator). Both are
 then converted to Core ML (FP16) and wrapped to take/return 8-bit RGB images; marked GPU-only, window merge rewritten
 for batch 1 (same math). The last residual group's conv and skip are divided by 512 so FP16 does not overflow; the
 LayerNorm after it ignores scale, so the output is the same.
-The fine-tuned Photo v3 weights are shared under the same license (CC-BY-NC-SA-4.0): free for non-commercial use, with
+The fine-tuned Photo v3 and v4 weights are shared under the same license (CC-BY-NC-SA-4.0): free for non-commercial use, with
 attribution to Kim2091 and PixGamma. License text: https://creativecommons.org/licenses/by-nc-sa/4.0/
 
 ## Other licenses

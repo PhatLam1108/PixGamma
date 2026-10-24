@@ -24,7 +24,7 @@ public enum EnhanceMode: String, CaseIterable, Codable, Sendable {
     public var summary: String {
         switch self {
         case .auto: return "Phân tích ảnh rồi tự chọn model và độ mạnh"
-        case .standard: return "Ảnh chụp: giữ đúng chất liệu lông, da, vải, không vẽ vân giả (PixGamma Photo v2, SPAN 2x)"
+        case .standard: return "Ảnh chụp: giữ đúng chất liệu lông, da, vải, không vẽ vân giả (PixGamma Photo v3, SPAN 2x)"
         case .fidelity: return "Chân thực nhất, không bịa chi tiết — thanh Detail trộn RealESRNet ↔ RealESRGAN"
         case .art: return "Tranh vẽ, anime, đồ hoạ, CGI — nét sạch, mảng màu phẳng (anime_6B)"
         case .lowres: return "Ảnh nhỏ, nhiều nhiễu, ảnh web — có thanh khử nhiễu liên tục (general-x4v3 + wdn)"
@@ -58,9 +58,9 @@ public enum ModelCatalog {
     public static func networks(for mode: EnhanceMode) -> [ModelSpec] {
         switch mode {
         case .auto, .standard:
-            // Photo: PixGamma Photo v2, Photo v1 (DAT2 fine-tuned from 4xBHI_dat2_real) trained further
-            // with a light GAN (training/configs/photo2gan.yml) for finer feathers, hair and fabric:
-            // DISTS 0.164 vs 0.165 on the held-out set, 0.170 vs 0.183 on sharp photos.
+            // Photo: PixGamma Photo v3, 4x-UltraSharpV2 (Kim2091, DAT2) trained on PixGamma's photos
+            // without a GAN (training/configs/photo3_us2.yml). Against Photo v2 on 40 held-out web photos:
+            // 30.3 vs 29.7 dB and DISTS 0.165 vs 0.164 at 4x, 35.4 vs 34.2 dB and DISTS 0.102 vs 0.104 at 2x.
             // 2x and 3x also run Photo at 4x and scale down: on 8 clean product shots, AI images and
             // banners (half size, back to 2x) that scored 35.4 dB / SSIM 0.968 against 34.5 / 0.960
             // for the SPAN 2x model, which softened detail (0.70 of the original's sharpness).
@@ -89,7 +89,7 @@ public enum ModelCatalog {
     public static let face = ModelSpec(file: "FaceRestore", scale: 1, tile: 512)
 
     /// Text regions (run with the 8-way ensemble): PixGamma Photo v1 (PhotoV1, no GAN, so it never
-    /// invents strokes; Photo v2's GAN is kept off text), which was trained with text
+    /// invents strokes; Photo v1 still reads text best), which was trained with text
     /// tiles and beats the Text model on the text benchmark (OCR 90.4 vs 89.2 %, PSNR 30.7 vs
     /// 29.2 dB, sharpness 0.69 vs 0.58) and on real keyboards; then PixGamma's RealPLKSR Text model,
     /// then RealESRNet. PIXGAMMA_TEXT_MODEL=<file> forces another 4x model (benchmarks).

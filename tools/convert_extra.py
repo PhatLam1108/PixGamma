@@ -7,7 +7,8 @@ Produces (in PixGamma/Models/):
   FaceRestore.mlpackage  GFPGAN v1.4 (Apache-2.0), 512 -> 512
   HighFidelity.mlpackage RealESRNet_x4plus (PSNR-oriented), 256 -> 1024
   Photo.mlpackage        4xBHI_dat2_real (Phhofm, CC-BY-4.0), DAT2, 256 -> 1024      [needs --with spandrel]
-                         (PIXGAMMA_PHOTO_WEIGHTS: any RealPLKSR or DAT checkpoint, e.g. a fine-tune)
+                         (PIXGAMMA_PHOTO_WEIGHTS: any RealPLKSR or DAT checkpoint; Photo v3 = training/configs/photo3_us2.yml,
+                          with PIXGAMMA_PHOTO_DESC / PIXGAMMA_PHOTO_LICENSE set for CC-BY-NC-SA-4.0, Kim2091)
   Photo2x.mlpackage      2xNomosUni_span_multijpg_ldl (Phhofm, CC-BY-4.0), 256 -> 512 [needs --with spandrel]
   FaceRealistic.mlpackage CodeFormer (S-Lab License 1.0, NON-COMMERCIAL) with a "fidelity" input
 
@@ -543,6 +544,39 @@ def _patch_dat_for_coreml():
     ops._cast = cast
 
 
+def _dat_fp16_safe(net, probes, limit=4096.0):
+    """The last residual group feeds only the final LayerNorm, which ignores scale. Some
+    checkpoints (Photo v3, from UltraSharpV2) reach ~2e5 there, past FP16's 65504, so its conv
+    and residual are divided by a power of two (same output up to LayerNorm's eps)."""
+    import types
+    last = net.layers[-1]
+    peak = []
+    h = last.register_forward_hook(lambda m, i, o: peak.append(o.abs().max().item()))
+    with torch.no_grad():
+        for p in probes:
+            net(p)
+    h.remove()
+    k = 1.0
+    while max(peak) / k > limit:
+        k *= 2
+    if k == 1.0:
+        return
+    print(f"DAT last group peaks at {max(peak):.0f}: dividing it by {k:g} for FP16")
+    with torch.no_grad():
+        last.conv.weight /= k
+        last.conv.bias /= k
+
+    def forward(self, x, x_size):
+        H, W = x_size
+        res = x / k
+        for blk in self.blocks:
+            x = blk(x, x_size)
+        x = x.transpose(1, 2).reshape(x.shape[0], -1, H, W)
+        x = self.conv(x).flatten(2).transpose(1, 2)
+        return res + x
+    last.forward = types.MethodType(forward, last)
+
+
 def convert_photo():
     # PIXGAMMA_PHOTO_WEIGHTS / PIXGAMMA_PHOTO_NAME export another checkpoint (a fine-tune in
     # training/experiments/*/models/*.safetensors, or NomosWebPhoto) instead of the stock one.
@@ -551,11 +585,14 @@ def convert_photo():
     net = _spandrel_load(weights)
     if type(net).__name__ == "DAT":
         _patch_dat_for_coreml()
+        real = load_test_image(PARROT, TILE)
+        _dat_fp16_safe(net, [torch.rand(1, 3, TILE, TILE)] + ([to_tensor(real)] if real is not None else []))
         tile_seam_check(base.ImageWrapper(net).eval(), name, 4)
         desc = os.environ.get("PIXGAMMA_PHOTO_DESC", "PixGamma Photo 4x upscaler (4xBHI_dat2_real by Phhofm, CC-BY-4.0)")
+        lic = os.environ.get("PIXGAMMA_PHOTO_LICENSE", "CC-BY-4.0 4xBHI_dat2_real by Phhofm")
         # "compute: gpu": the Neural Engine never finishes a DAT tile (attention); PixGamma keeps it on the GPU.
-        out = convert_fixed_sr(name, net, 4, desc, {"license": "CC-BY-4.0 4xBHI_dat2_real by Phhofm", "compute": "gpu"},
-                               real=load_test_image(PARROT, TILE))
+        out = convert_fixed_sr(name, net, 4, desc, {"license": lic, "compute": "gpu"},
+                               real=real)
         unit_check(out, units=("CPU_AND_GPU",))
         return
     plk = sys.modules[type(net.feats[1].lk).__module__].PLKConv2d

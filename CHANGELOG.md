@@ -4,6 +4,24 @@ Theo kiểu [Keep a Changelog](https://keepachangelog.com/vi/1.1.0/), đánh s�
 Bản 0.x là bản phát triển nội bộ, dùng miễn phí, phi thương mại.
 
 ## [Chưa phát hành]
+### Tính năng mới
+- **PixGamma Photo v4 làm model ảnh mặc định**: gốc là 4x-UltraSharpV2 (Kim2091, CC-BY-NC-SA-4.0), train trên ảnh của PixGamma thành Photo v3 (`training/configs/photo3_us2.yml`), rồi train thêm trên ảnh CC0 cận cảnh lông chim, tóc, lông mày, môi, da với GAN rất nhẹ 0,03 (`training/configs/photo4.yml`). Vùng chữ vẫn dùng Photo v1.
+  - Bộ chấm chi tiết mịn mới (`training/eval_texture.py`, 25 vùng cắt CC0 không dùng để train), phóng 2x: DISTS 0,094, so với 0,099 của Photo v3, 0,123 của Photo v2 và 0,152 của UltraSharpV2. Độ chi tiết 0,85 so với ảnh gốc (v3: 0,68).
+  - Tóc ở 4x: DISTS 0,108 so với 0,128 của v3, độ chi tiết 0,42 so với 0,31.
+  - 40 ảnh web: DISTS 0,100 ở 2x (v2: 0,104), PSNR 35,1 dB (v2: 34,2).
+  - Trọng số Photo v3, v4 dùng giấy phép CC-BY-NC-SA-4.0 như UltraSharpV2: miễn phí, phi thương mại, ghi công Kim2091 (`PixGamma/Models/LICENSES.md`).
+- **PixGamma Photo v2** (đã thay bằng v4): Photo v1 train tiếp với GAN nhẹ.
+- **Giao diện mới, Sáng và Tối**: ảnh chiếm cả cửa sổ, dock chọn chế độ và tỉ lệ, dải ảnh phía dưới, so sánh 100% và 200% chia đôi hoặc song song, xuất từng ảnh hoặc tất cả.
+- **Recover hiểu nội dung ảnh**: Apple Vision mô tả ảnh làm prompt; Resemblance tự đặt 85 cho động vật, cây cỏ, chân dung, 40 cho ảnh khác; chốt an toàn cho biển hiệu, bản đồ, ảnh nhiều chữ (Creativity tối đa 0,3, khoá nét) và ảnh sản phẩm (tối đa 0,45).
+
+### Thay đổi
+- **Phóng 2x và 3x chạy Photo ở 4x rồi thu nhỏ** thay vì model SPAN 2x. 8 ảnh sạch thu nửa rồi phóng lại 2x: 35,4 dB, SSIM 0,966, độ nét 0,96 so với ảnh gốc (SPAN: 34,5 dB, 0,960, 0,70). Chậm hơn khoảng 1,8 lần; `PIXGAMMA_FAST_2X=1` giữ SPAN.
+- Script chuyển model (`tools/convert_extra.py`) tự chia nhỏ nhóm lớp cuối của DAT khi vượt giới hạn FP16 (Photo v3, v4 lên tới khoảng 1,9 triệu); LayerNorm phía sau không đổi theo tỉ lệ nên kết quả giữ nguyên, Core ML lệch 0,25/255 so với PyTorch.
+
+### Sửa lỗi
+- **Ghi đè ảnh gốc khi thư mục xuất là chính thư mục chứa ảnh**: file ra trùng tên và thay mất ảnh gốc. Nay đường dẫn ra được so với ảnh gốc (theo cả symlink, không phân biệt hoa thường) và thêm hậu tố `-pixgamma` khi trùng; app dùng chung cách đặt tên này.
+- **Phục hồi khuôn mặt tô màu ảnh đen trắng**: ảnh đơn sắc giữ nguyên màu ở vùng mặt.
+
 ### Đổi tên
 - **Pixora đổi tên thành PixGamma** (tên Pixora trùng nhiều app AI chỉnh ảnh khác), kèm logo mới hình ống kính có lá khẩu. App là `PixGamma.app`, lệnh là `pixgamma`, repo là `PhatLam1108/PixGamma`, model ảnh là PixGamma Photo v1. Bundle id giữ nguyên `vn.phatlam.pixora`.
 - Giữ tương thích bản cũ: bản phát hành kèm thêm `Pixora-<version>.dmg` (chứa `Pixora.app`) để app 0.2.1 tự cập nhật được; bộ cập nhật mới chuyển `Pixora.app` thành `PixGamma.app` và trỏ lại các link lệnh `pixora`. Thư mục `Application Support/Pixora` (model đã compile, model Recover) tự chuyển sang `Application Support/PixGamma`. Lệnh `pixora` vẫn chạy (là tên khác của `pixgamma`), biến `PIXORA_*` vẫn được đọc khi không có `PIXGAMMA_*`.

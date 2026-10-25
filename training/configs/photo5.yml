@@ -1,0 +1,102 @@
+# PixGamma Photo v5: thử gốc 4xNomos2_hq_dat2 (Philip Hofmann, DAT2, CC-BY-4.0) với dữ liệu và loss của Photo v4.
+# Trên bộ chi tiết mịn (eval_texture.py) Nomos2 giống gốc nhất ở ảnh sạch 2x (DISTS 0,072 so với 0,094 của Photo v4)
+# nhưng kém nhất ở ảnh web nén (0,245 so với 0,171) vì chỉ train trên ảnh không suy giảm. Mục tiêu v5: giữ chi tiết
+# của Nomos2 trên ảnh sạch, học thêm ảnh web như v3, v4. Giấy phép gốc CC-BY-4.0, thoáng hơn NC-SA của UltraSharpV2.
+#   .venv/bin/python ../train_mps.py -opt ../configs/photo5.yml
+name: pixgamma_photo5
+scale: 4
+use_amp: false
+use_channels_last: false
+fast_matmul: false
+use_compile: false
+num_gpu: 0              # patch MPS: num_gpu 0 + TRAINNER_MPS=1 → chạy trên GPU Mac
+manual_seed: 2510
+
+datasets:
+  train:
+    name: photo
+    type: pairedimagedataset
+    dataroot_gt: [../datasets/photo1/train/hr, ../datasets/photo_clean/hr, ../datasets/text_mix/hr, ../datasets/texture/train/hr, ../datasets/texture_clean/hr]
+    dataroot_lq: [../datasets/photo1/train/lr, ../datasets/photo_clean/lr, ../datasets/text_mix/lr, ../datasets/texture/train/lr, ../datasets/texture_clean/lr]
+    lq_size: 64
+    use_hflip: true
+    use_rot: true
+    num_worker_per_gpu: 6
+    batch_size_per_gpu: 6
+    accum_iter: 1
+    prefetch_mode: ~
+  val:
+    name: photo_val
+    type: pairedimagedataset
+    dataroot_gt: [../datasets/photo1/val_small/hr]
+    dataroot_lq: [../datasets/photo1/val_small/lr]
+
+network_g:
+  type: dat_2
+
+network_d:
+  type: unetdiscriminatorsn
+
+path:
+  pretrain_network_g: ../../tools/weights/candidates/4xNomos2_hq_dat2.safetensors
+  param_key_g: ~
+  strict_load_g: true
+  resume_state: ~
+
+train:
+  ema_decay: 0.999
+  ema_power: 0.75
+  grad_clip: true
+  grad_clip_max_norm: 100
+  optim_g:
+    type: AdamW
+    lr: !!float 1e-5
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  optim_d:
+    type: AdamW
+    lr: !!float 5e-5
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  scheduler:
+    type: MultiStepLR
+    milestones: [11000]
+    gamma: 0.5
+  total_iter: 15000
+  warmup_iter: 200
+  losses:
+    - type: charbonnierloss
+      loss_weight: 1.0
+    - type: mssimloss
+      loss_weight: 0.2
+    - type: ldlloss
+      loss_weight: 1.0
+    - type: ffloss
+      loss_weight: 0.3
+    - type: distsloss
+      loss_weight: 0.25
+    - type: ganloss
+      gan_type: vanilla
+      loss_weight: 0.03
+
+val:
+  val_enabled: true
+  val_freq: 3000
+  save_img: true
+  tile_size: 0
+  metrics_enabled: true
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 4
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 4
+      test_y_channel: false
+
+logger:
+  print_freq: 100
+  save_checkpoint_freq: 3000
+  save_checkpoint_format: safetensors
+  use_tb_logger: false

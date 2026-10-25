@@ -5,6 +5,8 @@ Bản 0.x là bản phát triển nội bộ, dùng miễn phí, phi thương m�
 
 ## [Chưa phát hành]
 ### Tính năng mới
+- **PixGamma Photo v6 thay Photo v4**: v4 train thêm 12.000 vòng với tỉ lệ ô ảnh sạch tăng từ khoảng 17% lên 36% (thêm 2.668 ô lông thú CC0) và ô lông, tóc, da khoảng 21%; số ô ảnh web giữ nguyên (`training/configs/photo6.yml`). Bộ chi tiết mịn: DISTS ở ảnh sạch 2x 0,090 (v4: 0,094), ảnh sạch 4x 0,102 (0,104), ảnh web 4x giữ 0,171. 40 ảnh web: 0,164 ở 4x (0,167), 0,099 ở 2x (0,100). 8 ảnh sạch qua app ở 2x: 36,5 dB, SSIM 0,975, độ nét 0,92. Còn kém 4xNomos2_hq_dat2 ở ảnh sạch 2x (0,072) nhưng model đó tụt nhiều ở ảnh nén (0,245).
+- Đã thử nhưng không dùng: Photo v5 lấy gốc 4xNomos2_hq_dat2 (CC-BY-4.0) với dữ liệu của v4, thua v4 ở hầu hết bài chấm (ảnh sạch 2x 0,098, ảnh web 0,181).
 - **PixGamma Photo v4 làm model ảnh mặc định**: gốc là 4x-UltraSharpV2 (Kim2091, CC-BY-NC-SA-4.0), train trên ảnh của PixGamma thành Photo v3 (`training/configs/photo3_us2.yml`), rồi train thêm trên ảnh CC0 cận cảnh lông chim, tóc, lông mày, môi, da với GAN rất nhẹ 0,03 (`training/configs/photo4.yml`). Vùng chữ vẫn dùng Photo v1.
   - Bộ chấm chi tiết mịn mới (`training/eval_texture.py`, 25 vùng cắt CC0 không dùng để train), phóng 2x: DISTS 0,094, so với 0,099 của Photo v3, 0,123 của Photo v2 và 0,152 của UltraSharpV2. Độ chi tiết 0,85 so với ảnh gốc (v3: 0,68).
   - Tóc ở 4x: DISTS 0,108 so với 0,128 của v3, độ chi tiết 0,42 so với 0,31.

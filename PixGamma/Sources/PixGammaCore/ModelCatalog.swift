@@ -24,7 +24,7 @@ public enum EnhanceMode: String, CaseIterable, Codable, Sendable {
     public var summary: String {
         switch self {
         case .auto: return "Phân tích ảnh rồi tự chọn model và độ mạnh"
-        case .standard: return "Ảnh chụp: giữ đúng chất liệu lông, da, vải, không vẽ vân giả (PixGamma Photo v4, SPAN 2x)"
+        case .standard: return "Ảnh chụp: giữ đúng chất liệu lông, da, vải, không vẽ vân giả (PixGamma Photo v6, SPAN 2x)"
         case .fidelity: return "Chân thực nhất, không bịa chi tiết — thanh Detail trộn RealESRNet ↔ RealESRGAN"
         case .art: return "Tranh vẽ, anime, đồ hoạ, CGI — nét sạch, mảng màu phẳng (anime_6B)"
         case .lowres: return "Ảnh nhỏ, nhiều nhiễu, ảnh web — có thanh khử nhiễu liên tục (general-x4v3 + wdn)"
@@ -58,11 +58,13 @@ public enum ModelCatalog {
     public static func networks(for mode: EnhanceMode) -> [ModelSpec] {
         switch mode {
         case .auto, .standard:
-            // Photo: PixGamma Photo v4, Photo v3 (4x-UltraSharpV2 by Kim2091, DAT2, trained on PixGamma's
-            // photos, training/configs/photo3_us2.yml) trained further on feather, hair and skin close-ups
-            // with a very light GAN (photo4.yml). On held-out feathers, hair, brows, lips and skin
-            // (eval_texture.py, 2x): DISTS 0.094 vs 0.099 for v3 and 0.152 for UltraSharpV2, fine detail
-            // 0.85 vs 0.68 of the original's; hair DISTS 0.108 vs 0.128 at 4x. PSNR is 0.4-0.6 dB lower.
+            // Photo: PixGamma Photo v6. Lineage: 4x-UltraSharpV2 (Kim2091, DAT2) -> v3, trained on PixGamma's
+            // photos (training/configs/photo3_us2.yml) -> v4, plus feather, hair and skin close-ups with a
+            // very light GAN (photo4.yml) -> v6, with twice the share of clean tiles (photo6.yml).
+            // On held-out feathers, hair, brows, lips and skin (eval_texture.py), DISTS:
+            //   clean 2x: v6 0.090, v4 0.094, UltraSharpV2 0.152
+            //   web 4x: v6 0.171, v4 0.171
+            // 40 web photos: v6 0.164, v4 0.167.
             // 2x and 3x also run Photo at 4x and scale down: on 8 clean product shots, AI images and
             // banners (half size, back to 2x) that scored 35.4 dB / SSIM 0.968 against 34.5 / 0.960
             // for the SPAN 2x model, which softened detail (0.70 of the original's sharpness).

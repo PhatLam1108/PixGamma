@@ -24,7 +24,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/brand/hero-en-dark.webp">
-    <img src="docs/brand/hero-en-light.webp" width="100%" alt="PixGamma: macaw and human eye before and after 4x upscaling">
+    <img src="docs/brand/hero-en-light.webp" width="100%" alt="PixGamma: macaw and portrait before and after 4x upscaling">
   </picture>
 </p>
 
@@ -91,23 +91,31 @@ Delete `/Applications/PixGamma.app` and `~/Library/Application Support/PixGamma`
 
 ## Examples
 
-Inputs were downscaled 4 times and JPEG-compressed to mimic web images, then upscaled 4x by the app (Auto mode, PixGamma Photo v6). Each row shows a bicubic resize, PixGamma 4x and the original, cropped at 1:1 pixels.
+Originals were downscaled 4 times (400 to 480 px) and upscaled back 4x. Each figure puts PixGamma Photo v6 next to Photo v4, UltraSharpV2 and the original; the yellow boxes are the crops shown below, and the DISTS numbers come from the fine-detail benchmark (lower is closer to the original).
 
-| Welcome sign in Fenit, Ireland (text protection) |
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/samples/compare-macaw-v6-en-dark.webp">
+  <img src="docs/samples/compare-macaw-v6-en-light.webp" width="100%" alt="Parrot feathers: Photo v4, Photo v6, UltraSharpV2 and the original">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/samples/compare-hair-v6-en-dark.webp">
+  <img src="docs/samples/compare-hair-v6-en-light.webp" width="100%" alt="Hair: Photo v4, Photo v6, UltraSharpV2 and the original">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/samples/compare-skin-v6-en-dark.webp">
+  <img src="docs/samples/compare-skin-v6-en-light.webp" width="100%" alt="Eyebrows and skin: Photo v4, Photo v6, UltraSharpV2 and the original">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/samples/compare-fur-v6-en-dark.webp">
+  <img src="docs/samples/compare-fur-v6-en-light.webp" width="100%" alt="Cat fur: input, UltraSharpV2, Photo v6 and the original">
+</picture>
+
+| Welcome sign in Fenit, Ireland (text protection; bicubic, PixGamma 4x through the app, original) |
 |---|
 | ![Sign: bicubic, PixGamma and the original](docs/samples/compare-sign-en.jpg) |
-
-| Macaw feathers (Standard) |
-|---|
-| ![Macaw: bicubic, PixGamma and the original](docs/samples/compare-macaw-en.jpg) |
-
-| Black-and-white portrait (Realistic face) |
-|---|
-| ![Portrait: bicubic, PixGamma and the original](docs/samples/compare-portrait-en.jpg) |
-
-| Long hair (Standard) |
-|---|
-| ![Hair: bicubic, PixGamma and the original](docs/samples/compare-hair-en.jpg) |
 
 Sample sources: [docs/samples/CREDITS.md](docs/samples/CREDITS.md) (CC0 and public domain).
 

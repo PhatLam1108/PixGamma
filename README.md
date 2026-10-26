@@ -24,7 +24,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/brand/hero-vi-dark.webp">
-    <img src="docs/brand/hero-vi-light.webp" width="100%" alt="PixGamma: con vẹt và mắt người trước/sau khi phóng 4x">
+    <img src="docs/brand/hero-vi-light.webp" width="100%" alt="PixGamma: con vẹt và chân dung trước/sau khi phóng 4x">
   </picture>
 </p>
 
@@ -91,23 +91,31 @@ Xóa `/Applications/PixGamma.app` và thư mục `~/Library/Application Support/
 
 ## Ví dụ
 
-Ảnh vào được thu nhỏ 4 lần rồi nén JPEG để giống ảnh lấy từ web, sau đó phóng 4x bằng app (chế độ Auto, PixGamma Photo v6). Mỗi ảnh gồm phóng thường bicubic, PixGamma 4x và ảnh gốc, cắt đúng điểm ảnh 1:1.
+Ảnh gốc được thu nhỏ 4 lần (400 đến 480 px) rồi phóng lại 4x. Mỗi ảnh đặt PixGamma Photo v6 cạnh Photo v4, UltraSharpV2 và ảnh gốc; khung vàng là vùng được cắt phóng to bên dưới, số DISTS lấy từ bộ chấm chi tiết mịn (thấp hơn là giống ảnh gốc hơn).
 
-| Biển chào ở Fenit, Ireland (giữ chữ) |
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/samples/compare-macaw-v6-vi-dark.webp">
+  <img src="docs/samples/compare-macaw-v6-vi-light.webp" width="100%" alt="Lông vẹt: Photo v4, Photo v6, UltraSharpV2 và ảnh gốc">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/samples/compare-hair-v6-vi-dark.webp">
+  <img src="docs/samples/compare-hair-v6-vi-light.webp" width="100%" alt="Tóc: Photo v4, Photo v6, UltraSharpV2 và ảnh gốc">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/samples/compare-skin-v6-vi-dark.webp">
+  <img src="docs/samples/compare-skin-v6-vi-light.webp" width="100%" alt="Lông mày và da: Photo v4, Photo v6, UltraSharpV2 và ảnh gốc">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/samples/compare-fur-v6-vi-dark.webp">
+  <img src="docs/samples/compare-fur-v6-vi-light.webp" width="100%" alt="Lông mèo: ảnh vào, UltraSharpV2, Photo v6 và ảnh gốc">
+</picture>
+
+| Biển chào ở Fenit, Ireland (giữ chữ; bicubic, PixGamma 4x qua app, ảnh gốc) |
 |---|
 | ![Biển chữ: bicubic, PixGamma và ảnh gốc](docs/samples/compare-sign-vi.jpg) |
-
-| Lông vẹt (Standard) |
-|---|
-| ![Vẹt: bicubic, PixGamma và ảnh gốc](docs/samples/compare-macaw-vi.jpg) |
-
-| Chân dung đen trắng (khuôn mặt Chân thực) |
-|---|
-| ![Chân dung: bicubic, PixGamma và ảnh gốc](docs/samples/compare-portrait-vi.jpg) |
-
-| Tóc dài (Standard) |
-|---|
-| ![Tóc: bicubic, PixGamma và ảnh gốc](docs/samples/compare-hair-vi.jpg) |
 
 Nguồn ảnh mẫu ở [docs/samples/CREDITS.md](docs/samples/CREDITS.md) (CC0 và public domain).
 

@@ -24,7 +24,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/brand/hero-en-dark.webp">
-    <img src="docs/brand/hero-en-light.webp" width="100%" alt="PixGamma: macaw and portrait before and after 4x upscaling">
+    <img src="docs/brand/hero-en-light.webp" width="100%" alt="PixGamma: macaw and human eye before and after 4x upscaling">
   </picture>
 </p>
 
@@ -93,17 +93,17 @@ Delete `/Applications/PixGamma.app` and `~/Library/Application Support/PixGamma`
 
 Inputs were downscaled 4 times and JPEG-compressed to mimic web images, then upscaled 4x by the app (Auto mode, PixGamma Photo v6). Each row shows a bicubic resize, PixGamma 4x and the original, cropped at 1:1 pixels.
 
-| Backlit ThinkPad keyboard (text protection) |
+| Welcome sign in Fenit, Ireland (text protection) |
 |---|
-| ![ThinkPad keyboard: bicubic, PixGamma and the original](docs/samples/compare-thinkpad-en.jpg) |
+| ![Sign: bicubic, PixGamma and the original](docs/samples/compare-sign-en.jpg) |
 
-| Macaw (Standard) |
+| Macaw feathers (Standard) |
 |---|
 | ![Macaw: bicubic, PixGamma and the original](docs/samples/compare-macaw-en.jpg) |
 
-| Portrait (Realistic face) |
+| Black-and-white portrait (Realistic face) |
 |---|
-| ![Portrait: bicubic, PixGamma and the original](docs/samples/compare-face-en.jpg) |
+| ![Portrait: bicubic, PixGamma and the original](docs/samples/compare-portrait-en.jpg) |
 
 | Long hair (Standard) |
 |---|

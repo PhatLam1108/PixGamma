@@ -24,7 +24,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/brand/hero-vi-dark.webp">
-    <img src="docs/brand/hero-vi-light.webp" width="100%" alt="PixGamma: con vẹt và chân dung trước/sau khi phóng 4x">
+    <img src="docs/brand/hero-vi-light.webp" width="100%" alt="PixGamma: con vẹt và mắt người trước/sau khi phóng 4x">
   </picture>
 </p>
 
@@ -93,17 +93,17 @@ Xóa `/Applications/PixGamma.app` và thư mục `~/Library/Application Support/
 
 Ảnh vào được thu nhỏ 4 lần rồi nén JPEG để giống ảnh lấy từ web, sau đó phóng 4x bằng app (chế độ Auto, PixGamma Photo v6). Mỗi ảnh gồm phóng thường bicubic, PixGamma 4x và ảnh gốc, cắt đúng điểm ảnh 1:1.
 
-| Bàn phím ThinkPad đèn nền (giữ chữ) |
+| Biển chào ở Fenit, Ireland (giữ chữ) |
 |---|
-| ![Bàn phím ThinkPad: bicubic, PixGamma và ảnh gốc](docs/samples/compare-thinkpad-vi.jpg) |
+| ![Biển chữ: bicubic, PixGamma và ảnh gốc](docs/samples/compare-sign-vi.jpg) |
 
-| Vẹt (Standard) |
+| Lông vẹt (Standard) |
 |---|
 | ![Vẹt: bicubic, PixGamma và ảnh gốc](docs/samples/compare-macaw-vi.jpg) |
 
-| Chân dung (khuôn mặt Chân thực) |
+| Chân dung đen trắng (khuôn mặt Chân thực) |
 |---|
-| ![Chân dung: bicubic, PixGamma và ảnh gốc](docs/samples/compare-face-vi.jpg) |
+| ![Chân dung: bicubic, PixGamma và ảnh gốc](docs/samples/compare-portrait-vi.jpg) |
 
 | Tóc dài (Standard) |
 |---|

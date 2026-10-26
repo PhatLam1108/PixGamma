@@ -91,19 +91,23 @@ Xóa `/Applications/PixGamma.app` và thư mục `~/Library/Application Support/
 
 ## Ví dụ
 
-Ảnh vào được thu nhỏ 4 lần rồi nén JPEG để giống ảnh lấy từ web. Bên trái phóng lại bằng bicubic, bên phải là PixGamma 4x.
+Ảnh vào được thu nhỏ 4 lần rồi nén JPEG để giống ảnh lấy từ web, sau đó phóng 4x bằng app (chế độ Auto, PixGamma Photo v6). Mỗi ảnh gồm phóng thường bicubic, PixGamma 4x và ảnh gốc, cắt đúng điểm ảnh 1:1.
 
 | Bàn phím ThinkPad đèn nền (giữ chữ) |
 |---|
-| ![Bàn phím ThinkPad: bicubic và PixGamma](docs/samples/compare-thinkpad.jpg) |
+| ![Bàn phím ThinkPad: bicubic, PixGamma và ảnh gốc](docs/samples/compare-thinkpad-vi.jpg) |
 
 | Vẹt (Standard) |
 |---|
-| ![Vẹt: bicubic và PixGamma](docs/samples/compare-macaw.jpg) |
+| ![Vẹt: bicubic, PixGamma và ảnh gốc](docs/samples/compare-macaw-vi.jpg) |
 
 | Chân dung (khuôn mặt Chân thực) |
 |---|
-| ![Chân dung: bicubic và PixGamma](docs/samples/compare-face.jpg) |
+| ![Chân dung: bicubic, PixGamma và ảnh gốc](docs/samples/compare-face-vi.jpg) |
+
+| Tóc dài (Standard) |
+|---|
+| ![Tóc: bicubic, PixGamma và ảnh gốc](docs/samples/compare-hair-vi.jpg) |
 
 Nguồn ảnh mẫu ở [docs/samples/CREDITS.md](docs/samples/CREDITS.md) (CC0 và public domain).
 

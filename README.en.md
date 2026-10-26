@@ -91,19 +91,23 @@ Delete `/Applications/PixGamma.app` and `~/Library/Application Support/PixGamma`
 
 ## Examples
 
-Inputs were downscaled 4x and JPEG-compressed to mimic web images. Left: bicubic; right: PixGamma 4x.
+Inputs were downscaled 4 times and JPEG-compressed to mimic web images, then upscaled 4x by the app (Auto mode, PixGamma Photo v6). Each row shows a bicubic resize, PixGamma 4x and the original, cropped at 1:1 pixels.
 
 | Backlit ThinkPad keyboard (text protection) |
 |---|
-| ![ThinkPad keyboard: bicubic vs PixGamma](docs/samples/compare-thinkpad.jpg) |
+| ![ThinkPad keyboard: bicubic, PixGamma and the original](docs/samples/compare-thinkpad-en.jpg) |
 
 | Macaw (Standard) |
 |---|
-| ![Macaw: bicubic vs PixGamma](docs/samples/compare-macaw.jpg) |
+| ![Macaw: bicubic, PixGamma and the original](docs/samples/compare-macaw-en.jpg) |
 
 | Portrait (Realistic face) |
 |---|
-| ![Portrait: bicubic vs PixGamma](docs/samples/compare-face.jpg) |
+| ![Portrait: bicubic, PixGamma and the original](docs/samples/compare-face-en.jpg) |
+
+| Long hair (Standard) |
+|---|
+| ![Hair: bicubic, PixGamma and the original](docs/samples/compare-hair-en.jpg) |
 
 Sample sources: [docs/samples/CREDITS.md](docs/samples/CREDITS.md) (CC0 and public domain).
 

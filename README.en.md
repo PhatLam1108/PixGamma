@@ -91,26 +91,26 @@ Delete `/Applications/PixGamma.app` and `~/Library/Application Support/PixGamma`
 
 ## Examples
 
-Originals were downscaled 4 times (400 to 480 px) and upscaled back 4x. Each figure puts PixGamma Photo v6 next to Photo v4, UltraSharpV2 and the original; the yellow boxes are the crops shown below, and the DISTS numbers come from the fine-detail benchmark (lower is closer to the original).
+Originals were downscaled 4 times (400 to 480 px) and upscaled back 4x. Each figure puts PixGamma Photo v7 next to Photo v6, UltraSharpV2 and the original; the yellow boxes are the crops shown below, and the DISTS numbers come from the fine-detail benchmark (lower is closer to the original).
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/samples/compare-macaw-v6-en-dark.webp">
-  <img src="docs/samples/compare-macaw-v6-en-light.webp" width="100%" alt="Parrot feathers: Photo v4, Photo v6, UltraSharpV2 and the original">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/samples/compare-macaw-v7-en-dark.webp">
+  <img src="docs/samples/compare-macaw-v7-en-light.webp" width="100%" alt="Parrot feathers: Photo v6, Photo v7, UltraSharpV2 and the original">
 </picture>
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/samples/compare-hair-v6-en-dark.webp">
-  <img src="docs/samples/compare-hair-v6-en-light.webp" width="100%" alt="Hair: Photo v4, Photo v6, UltraSharpV2 and the original">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/samples/compare-hair-v7-en-dark.webp">
+  <img src="docs/samples/compare-hair-v7-en-light.webp" width="100%" alt="Hair: Photo v6, Photo v7, UltraSharpV2 and the original">
 </picture>
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/samples/compare-skin-v6-en-dark.webp">
-  <img src="docs/samples/compare-skin-v6-en-light.webp" width="100%" alt="Eyebrows and skin: Photo v4, Photo v6, UltraSharpV2 and the original">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/samples/compare-skin-v7-en-dark.webp">
+  <img src="docs/samples/compare-skin-v7-en-light.webp" width="100%" alt="Eyebrows and skin: Photo v6, Photo v7, UltraSharpV2 and the original">
 </picture>
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/samples/compare-fur-v6-en-dark.webp">
-  <img src="docs/samples/compare-fur-v6-en-light.webp" width="100%" alt="Cat fur: input, UltraSharpV2, Photo v6 and the original">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/samples/compare-fur-v7-en-dark.webp">
+  <img src="docs/samples/compare-fur-v7-en-light.webp" width="100%" alt="Cat fur: input, UltraSharpV2, Photo v7 and the original">
 </picture>
 
 | Welcome sign in Fenit, Ireland (text protection; bicubic, PixGamma 4x through the app, original) |
@@ -123,7 +123,7 @@ Sample sources: [docs/samples/CREDITS.md](docs/samples/CREDITS.md) (CC0 and publ
 
 | Area | Details |
 |---|---|
-| **AI modes** | **Auto** (measures noise, sharpness, JPEG blocking and faces, then picks a model); **Standard** (PixGamma Photo v6, our own DAT2 fine-tune of UltraSharpV2, trained further on feather, hair and skin close-ups for crisper strands, brows and pores while staying close to the original; text regions use Photo v1, and SPAN trained on compressed, blurred, noisy real photos; true materials, no invented texture); **High Fidelity** (faithful, Detail slider); **Art & CGI**; **Low Resolution** (continuous denoise); **Recover** (diffusion pixel regeneration; describes the photo by itself, e.g. "parrot, detailed feathers"; picks resemblance 85 for animals, hair and skin; a safety lock keeps shapes on photos with text, maps or products). |
+| **AI modes** | **Auto** (measures noise, sharpness, JPEG blocking and faces, then picks a model); **Standard** (PixGamma Photo v7, our own DAT2 fine-tune of UltraSharpV2, trained further on feather, hair and skin close-ups for crisper strands, brows and pores while staying close to the original; text regions use Photo v1, and SPAN trained on compressed, blurred, noisy real photos; true materials, no invented texture); **High Fidelity** (faithful, Detail slider); **Art & CGI**; **Low Resolution** (continuous denoise); **Recover** (diffusion pixel regeneration; describes the photo by itself, e.g. "parrot, detailed feathers"; picks resemblance 85 for animals, hair and skin; a safety lock keeps shapes on photos with text, maps or products). |
 | **Text** | Apple Vision finds and reads text, including Vietnamese with full diacritics. Text regions are rebuilt by a **dedicated text model** (RealPLKSR fine-tuned on synthetic Vietnamese/English text), averaged over 8 flips/rotations for straight strokes. Line size is measured from the pixels: lines too small (capitals under ~4 px) stay faithful. |
 | **Faces** | Realistic (CodeFormer, identity slider) or Creative (GFPGAN). Recover adds dedicated eye and eyebrow passes. |
 | **Size** | 1–16x scale, or target width/height. Uses the smallest 2x/4x base that suffices, stacks passes beyond 4x. Context-padded tiles, no seams. |
@@ -232,7 +232,7 @@ PixGamma (Swift package)
 
 - [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) (BSD-3-Clause), Xintao Wang et al.
 - [4xBHI_dat2_real](https://huggingface.co/Phips/4xBHI_dat2_real) (base of PhotoV1), [2xNomosUni_span_multijpg_ldl](https://openmodeldb.info/models/2x-NomosUni-span-multijpg-ldl) and [4xNomosWebPhoto_RealPLKSR](https://openmodeldb.info/models/4x-NomosWebPhoto-RealPLKSR) (CC-BY-4.0), Philip Hofmann. PhotoV1 (used for text) is a fine-tune of 4xBHI_dat2_real; the text model is a fine-tune of 4xNomosWebPhoto_RealPLKSR.
-- [4x-UltraSharpV2](https://huggingface.co/Kim2091/UltraSharpV2) (CC-BY-NC-SA-4.0), Kim2091: base of the Photo model (PixGamma Photo v3, v4, v6). These weights are shared under the same license, for non-commercial use only.
+- [4x-UltraSharpV2](https://huggingface.co/Kim2091/UltraSharpV2) (CC-BY-NC-SA-4.0), Kim2091: base of the Photo model (PixGamma Photo v3, v4, v6, v7). These weights are shared under the same license, for non-commercial use only.
 - [GFPGAN](https://github.com/TencentARC/GFPGAN) (Apache-2.0), Tencent ARC
 - [CodeFormer](https://github.com/sczhou/CodeFormer) (S-Lab License 1.0, **non-commercial only**), Shangchen Zhou et al.
 - Recover: [Realistic Vision V5.1](https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE) and [ControlNet 1.1 Tile](https://huggingface.co/lllyasviel/control_v11f1e_sd15_tile) (CreativeML OpenRAIL-M), [sd-vae-ft-mse](https://huggingface.co/stabilityai/sd-vae-ft-mse) (MIT), converted with Apple's [ml-stable-diffusion](https://github.com/apple/ml-stable-diffusion)

@@ -5,6 +5,8 @@ Bản 0.x là bản phát triển nội bộ, dùng miễn phí, phi thương m�
 
 ## [Chưa phát hành]
 ### Tính năng mới
+- **PixGamma Text v3 cho vùng chữ, thay Photo v1**: Photo v1 train thêm 10.000 vòng trên chữ tiếng Việt có dấu dày đặc (câu tiếng Việt và âm tiết ngẫu nhiên đủ 5 dấu thanh, 75% chữ nhỏ), giữ lật và xoay ảnh để lượt xoay 180 độ trong app vẫn có ích, không GAN (`training/configs/text_v3.yml`). Chấm cả quy trình chữ trong app: đọc đúng 92,4% ký tự (Photo v1: 91,0%), chữ có dấu đọc đúng 78,8% (76,6%), PSNR 30,4 dB (30,1), nét chữ 0,75 so với ảnh gốc (0,68). UltraSharpV2 chạy riêng: 90,0% và 72,4%. Giấy phép CC-BY-4.0 như Photo v1.
+- Đã thử nhưng không dùng: Text v2 lấy gốc Photo v7, đọc tốt khi chạy riêng nhưng trong app không hơn Text v3 ở chữ có dấu (77,7%).
 - **PixGamma Photo v7 thay Photo v6**: v6 train thêm 12.000 vòng trên cùng bộ dữ liệu, GAN tăng từ 0,03 lên 0,06 và DISTS từ 0,25 lên 0,3 (`training/configs/photo7.yml`). Bộ chi tiết mịn: DISTS ở ảnh sạch 2x 0,084 (v6: 0,090), tóc 0,086 (0,095), môi và da 0,078 (0,087); ảnh sạch 4x 0,101 (0,102); ảnh web 4x 0,172 (0,171). 40 ảnh web: 0,164 ở 4x như v6, 0,101 ở 2x (0,099). Sợi tóc, lông mày, nếp da rõ hơn ở ảnh sạch; ảnh web gần như không đổi.
 - **PixGamma Photo v6 thay Photo v4**: v4 train thêm 12.000 vòng với tỉ lệ ô ảnh sạch tăng từ khoảng 17% lên 36% (thêm 2.668 ô lông thú CC0) và ô lông, tóc, da khoảng 21%; số ô ảnh web giữ nguyên (`training/configs/photo6.yml`). Bộ chi tiết mịn: DISTS ở ảnh sạch 2x 0,090 (v4: 0,094), ảnh sạch 4x 0,102 (0,104), ảnh web 4x giữ 0,171. 40 ảnh web: 0,164 ở 4x (0,167), 0,099 ở 2x (0,100). 8 ảnh sạch qua app ở 2x: 36,5 dB, SSIM 0,975, độ nét 0,92. Còn kém 4xNomos2_hq_dat2 ở ảnh sạch 2x (0,072) nhưng model đó tụt nhiều ở ảnh nén (0,245).
 - Đã thử nhưng không dùng: Photo v5 lấy gốc 4xNomos2_hq_dat2 (CC-BY-4.0) với dữ liệu của v4, thua v4 ở hầu hết bài chấm (ảnh sạch 2x 0,098, ảnh web 0,181).
@@ -22,6 +24,7 @@ Bản 0.x là bản phát triển nội bộ, dùng miễn phí, phi thương m�
 - Script chuyển model (`tools/convert_extra.py`) tự chia nhỏ nhóm lớp cuối của DAT khi vượt giới hạn FP16 (Photo v3, v4 lên tới khoảng 1,9 triệu); LayerNorm phía sau không đổi theo tỉ lệ nên kết quả giữ nguyên, Core ML lệch 0,25/255 so với PyTorch.
 
 ### Sửa lỗi
+- **Bộ chấm chữ cho điểm nhảy và chấm sai một font**: chỉ 35 dòng chữ nên dịch ảnh 1 đến 3 px đã làm điểm dấu chênh tới 6 điểm, và font Trebuchet trên macOS không có chữ tiếng Việt (ảnh gốc hiện ô vuông). Nay mọi lần chấm lấy trung bình trên 8 cách dịch ảnh, Trebuchet thay bằng Georgia (`training/eval_text.py`, `training/eval_text_pipeline.py`).
 - **Ghi đè ảnh gốc khi thư mục xuất là chính thư mục chứa ảnh**: file ra trùng tên và thay mất ảnh gốc. Nay đường dẫn ra được so với ảnh gốc (theo cả symlink, không phân biệt hoa thường) và thêm hậu tố `-pixgamma` khi trùng; app dùng chung cách đặt tên này.
 - **Phục hồi khuôn mặt tô màu ảnh đen trắng**: ảnh đơn sắc giữ nguyên màu ở vùng mặt.
 

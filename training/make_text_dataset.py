@@ -30,6 +30,8 @@ SIZE = 512
 SMALL = 0.6   # share of lines drawn small (11–40 px HR)
 CHAIN = 0.35  # share of LR copies made by the two-step web chain
 THIN = 0.0    # share of lines in a light/regular face, light on a flat saturated banner colour
+VN = 0.75     # share of corpus phrases taken from the Vietnamese text (the rest English)
+SYLL = 0.4    # share of phrases made of random Vietnamese syllables (every tone on every vowel)
 VN_TEST = "ẢẮỮỢđƯơ"
 
 VN_TEXT = """
@@ -139,8 +141,8 @@ def syllable(rng):
     return rng.choice(ONSETS) + "".join(chars) + coda
 
 
-def words(rng, vn_ratio=0.75):
-    if rng.random() < 0.4:
+def words(rng):
+    if rng.random() < SYLL:
         phrase = " ".join(syllable(rng) for _ in range(rng.randint(1, 9)))
         r = rng.random()
         if r < 0.15:
@@ -148,7 +150,7 @@ def words(rng, vn_ratio=0.75):
         elif r < 0.5:
             phrase = phrase[:1].upper() + phrase[1:]
         return phrase
-    src = VN_TEXT if rng.random() < vn_ratio else EN_TEXT
+    src = VN_TEXT if rng.random() < VN else EN_TEXT
     w = src.split()
     n = rng.randint(1, 8)
     i = rng.randrange(len(w))
@@ -164,7 +166,19 @@ def words(rng, vn_ratio=0.75):
     return phrase
 
 
-def background(rng, photos):
+def paper(rng):
+    """Menu, sign and leaflet stock: light, slightly warm or cool, with fine fibre noise. Thin
+    dark type on this (menus, interpretive signs) broke into blobs: 'vegetables' read 'vegetabies'."""
+    base = np.array([rng.uniform(200, 250)] * 3, np.float32) + np.array([rng.uniform(-12, 12) for _ in range(3)], np.float32)
+    img = np.repeat(np.repeat(base[None, None], SIZE, 0), SIZE, 1)
+    img += np.random.default_rng(rng.randint(0, 2**31)).normal(0, rng.uniform(2, 9), (SIZE, SIZE, 1)).astype(np.float32)
+    im = Image.fromarray(img.clip(0, 255).astype(np.uint8))
+    return im.filter(ImageFilter.GaussianBlur(rng.uniform(0.3, 1.2)))
+
+
+def background(rng, photos, thin=False):
+    if thin and rng.random() < 0.6:
+        return paper(rng)
     if rng.random() < THIN:
         # Banner colours: saturated, mid-dark (white text on blue/red/green promos).
         h = rng.random()
@@ -211,12 +225,12 @@ def contrast_colour(bg_rgb, rng):
     return tuple(int(np.clip(base + t, 0, 255)) for t in tint)
 
 
-def draw_text_block(img, rng, fonts):
+def draw_text_block(img, rng, fonts, all_thin=False):
     d = ImageDraw.Draw(img)
     y = rng.randint(4, 60)
     while y < SIZE - 10:
         text = words(rng)
-        thin = rng.random() < THIN
+        thin = all_thin or rng.random() < THIN
         path, idx, cmap, _ = rng.choice([f for f in fonts if f[3]] if thin else fonts)
         if not fits(text, cmap):
             continue
@@ -234,7 +248,11 @@ def draw_text_block(img, rng, fonts):
         cx0, cy0 = min(SIZE - 1, max(0, box[0])), min(SIZE - 1, max(0, box[1]))
         cx1, cy1 = max(cx0 + 1, min(SIZE, box[2] + 1)), max(cy0 + 1, min(SIZE, box[3] + 1))
         mean = np.asarray(img.crop((cx0, cy0, cx1, cy1))).reshape(-1, 3).mean(0)
-        col = tuple(rng.randint(225, 255) for _ in range(3)) if thin and mean.mean() < 150 else contrast_colour(mean, rng)
+        if thin and mean.mean() >= 150:
+            g = rng.randint(15, 95)  # printed ink on paper: dark grey, never pure black
+            col = tuple(int(np.clip(g + rng.randint(-10, 10), 0, 255)) for _ in range(3))
+        else:
+            col = tuple(rng.randint(225, 255) for _ in range(3)) if thin and mean.mean() < 150 else contrast_colour(mean, rng)
         if rng.random() < 0.15:  # shadow or outline, common in banners
             sh = tuple(255 - c for c in col)
             d.text((x + max(1, size // 18), y + max(1, size // 18)), text, font=font, fill=sh)
@@ -297,8 +315,8 @@ def make(args):
     """Renders one sample; FreeType occasionally fails on odd sizes, so retry with a new seed."""
     i, out, seed, fonts, photos, cfg = args
     # Worker processes are spawned fresh (macOS), so the mix travels with each job.
-    global SMALL, CHAIN, THIN
-    SMALL, CHAIN, THIN = cfg
+    global SMALL, CHAIN, THIN, VN, SYLL
+    SMALL, CHAIN, THIN, VN, SYLL = cfg
     for attempt in range(8):
         try:
             return _make(i, out, seed + attempt * 7_919_000, fonts, photos)
@@ -308,11 +326,12 @@ def make(args):
 
 def _make(i, out, seed, fonts, photos):
     rng = random.Random(seed)
-    img = background(rng, photos)
-    if rng.random() < 0.3:
+    thin_tile = rng.random() < THIN
+    img = background(rng, photos, thin=thin_tile)
+    if rng.random() < 0.3 and not thin_tile:
         draw_keyboard(img, rng, fonts)
     else:
-        draw_text_block(img, rng, fonts)
+        draw_text_block(img, rng, fonts, all_thin=thin_tile)
     if rng.random() < 0.25:
         img = img.rotate(rng.uniform(-4, 4), resample=Image.BICUBIC, expand=False, fillcolor=img.getpixel((0, 0)))
     name = f"t{i:06d}.png"
@@ -330,6 +349,8 @@ def main():
     ap.add_argument("--small", type=float, default=SMALL)
     ap.add_argument("--chain", type=float, default=CHAIN)
     ap.add_argument("--thin", type=float, default=THIN)
+    ap.add_argument("--vn", type=float, default=VN, help="share of Vietnamese corpus phrases")
+    ap.add_argument("--syllables", type=float, default=SYLL, help="share of random Vietnamese syllable phrases")
     a = ap.parse_args()
     fonts = vn_fonts()
     photos = sorted(glob.glob(os.path.join(a.photos, "*.jpg")))
@@ -338,7 +359,7 @@ def main():
         out = ROOT / "datasets" / a.name / split
         (out / "hr").mkdir(parents=True, exist_ok=True)
         (out / "lr").mkdir(parents=True, exist_ok=True)
-        jobs = [(i, out, a.seed + off + i, fonts, photos, (a.small, a.chain, a.thin)) for i in range(n)]
+        jobs = [(i, out, a.seed + off + i, fonts, photos, (a.small, a.chain, a.thin, a.vn, a.syllables)) for i in range(n)]
         with ProcessPoolExecutor() as ex:
             list(ex.map(make, jobs, chunksize=32))
         print(f"{split}: {n} ô → {out}")

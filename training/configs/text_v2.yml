@@ -1,0 +1,97 @@
+# PixGamma Text v2 (vùng chữ): Photo v7 train tiếp trên chữ, thay Photo v1 ở vùng chữ nếu thắng bộ chấm chữ.
+# Photo v1 đọc đúng 89,9% (eval_text.py), UltraSharpV2 88,9%, Photo v3 88,4%: dòng UltraSharpV2 chưa từng học chữ
+# mảnh. Dữ liệu: text_vn (chữ tiếng Việt có dấu dày đặc: toàn câu tiếng Việt, 60% âm tiết ngẫu nhiên đủ 5 dấu thanh
+# trên mọi nguyên âm, 75% chữ nhỏ; make_text_dataset.py --vn 1 --syllables 0.6 --small 0.75 --thin 0.3, lặp 2 lần),
+# text5 (chữ mảnh mực tối trên giấy), text3, cộng ô chi tiết sạch để nền quanh chữ giữ tự nhiên.
+# Không lật, không xoay: chữ soi gương hay nằm ngang dạy sai hình chữ. Không GAN để không bịa nét chữ.
+#   .venv/bin/python ../train_mps.py -opt ../configs/text_v2.yml
+name: pixgamma_text_v2
+scale: 4
+use_amp: false
+use_channels_last: false
+fast_matmul: false
+use_compile: false
+num_gpu: 0              # patch MPS: num_gpu 0 + TRAINNER_MPS=1 → chạy trên GPU Mac
+manual_seed: 2410
+
+datasets:
+  train:
+    name: text
+    type: pairedimagedataset
+    dataroot_gt: [../datasets/text_vn/train/hr, ../datasets/text_vn/train/hr, ../datasets/text5/train/hr, ../datasets/text3/train/hr, ../datasets/texture_clean/hr]
+    dataroot_lq: [../datasets/text_vn/train/lr, ../datasets/text_vn/train/lr, ../datasets/text5/train/lr, ../datasets/text3/train/lr, ../datasets/texture_clean/lr]
+    lq_size: 64
+    use_hflip: false
+    use_rot: false
+    num_worker_per_gpu: 6
+    batch_size_per_gpu: 6
+    accum_iter: 1
+    prefetch_mode: ~
+  val:
+    name: text_val
+    type: pairedimagedataset
+    dataroot_gt: [../datasets/text_vn/val/hr]
+    dataroot_lq: [../datasets/text_vn/val/lr]
+
+network_g:
+  type: dat_2
+
+path:
+  pretrain_network_g: experiments/pixgamma_photo7/models/net_g_ema_12000.safetensors
+  param_key_g: ~
+  strict_load_g: true
+  resume_state: ~
+
+train:
+  ema_decay: 0.999
+  ema_power: 0.75
+  grad_clip: true
+  grad_clip_max_norm: 100
+  optim_g:
+    type: AdamW
+    lr: !!float 2e-5
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  scheduler:
+    type: MultiStepLR
+    milestones: [7000]
+    gamma: 0.5
+  total_iter: 10000
+  warmup_iter: 200
+  losses:
+    - type: charbonnierloss
+      loss_weight: 1.0
+    - type: mssimloss
+      loss_weight: 0.2
+    - type: sobeledgeloss
+      loss_weight: 0.6
+    - type: ldlloss
+      loss_weight: 1.0
+    - type: ffloss
+      loss_weight: 0.5
+    - type: gradientvarianceloss
+      loss_weight: 0.1
+    - type: linedistillerloss
+      loss_weight: 0.05
+
+val:
+  val_enabled: true
+  val_freq: 2500
+  save_img: true
+  tile_size: 0
+  metrics_enabled: true
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 4
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 4
+      test_y_channel: false
+
+logger:
+  print_freq: 100
+  save_checkpoint_freq: 2500
+  save_checkpoint_format: safetensors
+  use_tb_logger: false

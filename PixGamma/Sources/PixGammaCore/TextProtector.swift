@@ -162,7 +162,7 @@ enum TextProtector {
     }
 
     /// How much of the Text model to use for a line whose ink spread (`inkSpread`) is `spread`
-    /// source pixels. Text v3 with the 8-way ensemble reads as well as bicubic down to 4.3 px
+    /// source pixels. The RealPLKSR Text model (text3.yml) with the 8-way ensemble reads as well as bicubic down to 4.3 px
     /// capitals and is far sharper; at 3.6 px capitals (spread ≈ 1.0) a tone mark is under a
     /// pixel and the network draws crisp but wrong letters, so such lines fade to the plain
     /// resample: softer, but never a different letter. Re-typesetting them from Vision's reading
@@ -263,13 +263,14 @@ enum TextProtector {
         let spec = ModelCatalog.text
         guard !regions.isEmpty, ModelStore.shared.isAvailable(spec.file) else { return 0 }
         let engine = try TileEngine(model: ModelStore.shared.model(spec.file, device: device), spec: spec)
-        // PixGamma Photo v1 reads right even on 3.6 px capitals (OCR 76.1 % vs 72.3 % for the plain
-        // resample), so only the older Text model needs the small-text fade.
-        // Self-ensemble size. With Photo v1, 2 passes (as is + 180° turn) read best (OCR 91.1 %
-        // vs 90.4 % for 8) at a third of the time (keyboard 480 px at 4x: 12 s vs 37 s); the
-        // RealPLKSR Text model is fast enough for all 8. PIXGAMMA_TEXT_TTA=1|2|4|8 overrides.
-        let passes = Int(Env.get("TEXT_TTA") ?? "") ?? (spec.file == "PhotoV1" ? 2 : 8)
-        let sizeWeight: (Double) -> Double = spec.file == "PhotoV1" ? { _ in 1 } : { modelWeight(spread: $0) }
+        // The DAT2 models (Text v3, Photo v1) read as well as the plain resample on 3.6 px capitals,
+        // so only the older RealPLKSR Text model needs the small-text fade.
+        // Self-ensemble size. Text v3 with 2 passes (as is + 180° turn): OCR 92.4 %, marks 78.8 %;
+        // 8 passes: 92.8 %, 80.0 % at three times the time (keyboard 480 px at 4x: 12 s vs 37 s);
+        // the RealPLKSR Text model is fast enough for all 8. PIXGAMMA_TEXT_TTA=1|2|4|8 overrides.
+        let dat = spec.file != "Text"  // TextV3 and PhotoV1 are DAT2; Text is the older RealPLKSR
+        let passes = Int(Env.get("TEXT_TTA") ?? "") ?? (dat ? 2 : 8)
+        let sizeWeight: (Double) -> Double = dat ? { _ in 1 } : { modelWeight(spread: $0) }
         let debug = Env.isSet("DEBUG_TEXT")
         let sx = Double(output.width) / Double(source.width), sy = Double(output.height) / Double(source.height)
         let feather = max(2.0, 1.5 * sx)

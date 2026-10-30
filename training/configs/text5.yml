@@ -1,0 +1,96 @@
+# PixGamma Text v5 (PhotoV1 cho vùng chữ): Photo v1 train tiếp trên chữ, thêm chữ mảnh mực tối trên nền giấy.
+# Bộ test chữ 2x (20 ảnh CC0 có biển hiệu, menu, bao bì): chữ to và đậm đã gần ảnh gốc, chữ mảnh nhỏ
+# (khoảng 5 px ở ảnh vào) vỡ thành nét vón, 'vegetables' đọc ra 'vegetabies'. Bộ text cũ để THIN = 0.
+# Dữ liệu: text5 (make_text_dataset.py --thin 0.5 --small 0.75, nền giấy cho ô chữ mảnh) + text3.
+# Loss như text4, không GAN để không bịa nét chữ.
+#   .venv/bin/python ../train_mps.py -opt ../configs/text5.yml
+name: pixgamma_text5
+scale: 4
+use_amp: false
+use_channels_last: false
+fast_matmul: false
+use_compile: false
+num_gpu: 0              # patch MPS: num_gpu 0 + TRAINNER_MPS=1 → chạy trên GPU Mac
+manual_seed: 2410
+
+datasets:
+  train:
+    name: text
+    type: pairedimagedataset
+    dataroot_gt: [../datasets/text5/train/hr, ../datasets/text3/train/hr]
+    dataroot_lq: [../datasets/text5/train/lr, ../datasets/text3/train/lr]
+    lq_size: 64
+    use_hflip: true
+    use_rot: true
+    num_worker_per_gpu: 6
+    batch_size_per_gpu: 6
+    accum_iter: 1
+    prefetch_mode: ~
+  val:
+    name: text_val
+    type: pairedimagedataset
+    dataroot_gt: [../datasets/text5/val/hr]
+    dataroot_lq: [../datasets/text5/val/lr]
+
+network_g:
+  type: dat_2
+
+path:
+  pretrain_network_g: experiments/pixora_photo1/models/net_g_ema_15000.safetensors
+  param_key_g: ~
+  strict_load_g: true
+  resume_state: ~
+
+train:
+  ema_decay: 0.999
+  ema_power: 0.75
+  grad_clip: true
+  grad_clip_max_norm: 100
+  optim_g:
+    type: AdamW
+    lr: !!float 1e-5
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  scheduler:
+    type: MultiStepLR
+    milestones: [6000]
+    gamma: 0.5
+  total_iter: 8000
+  warmup_iter: 200
+  losses:
+    - type: charbonnierloss
+      loss_weight: 1.0
+    - type: mssimloss
+      loss_weight: 0.2
+    - type: sobeledgeloss
+      loss_weight: 0.6
+    - type: ldlloss
+      loss_weight: 1.0
+    - type: ffloss
+      loss_weight: 0.5
+    - type: gradientvarianceloss
+      loss_weight: 0.1
+    - type: linedistillerloss
+      loss_weight: 0.05
+
+val:
+  val_enabled: true
+  val_freq: 3000
+  save_img: true
+  tile_size: 0
+  metrics_enabled: true
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 4
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 4
+      test_y_channel: false
+
+logger:
+  print_freq: 100
+  save_checkpoint_freq: 1500
+  save_checkpoint_format: safetensors
+  use_tb_logger: false

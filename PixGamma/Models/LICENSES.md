@@ -7,15 +7,18 @@ models below (conversion: `tools/convert_models.py`, `tools/convert_extra.py`).
 
 | PixGamma model | Original model | Author | License | Source |
 |---|---|---|---|---|
-| PhotoV1.mlpackage | PixGamma Photo v1 (used for text regions): PixGamma fine-tune of 4xBHI_dat2_real (DAT2) on filtered CC0 photos and synthetic text (`training/configs/photo1.yml`) | Fine-tune: PixGamma; base model: Philip Hofmann (Phhofm / Helaman) | CC-BY-4.0 | Base: https://huggingface.co/Phips/4xBHI_dat2_real |
+| TextV3.mlpackage | PixGamma Text v3 (used for text regions): PixGamma Photo v1 trained further on synthetic Vietnamese and English text (`training/configs/text_v3.yml`). Photo v1: PixGamma fine-tune of 4xBHI_dat2_real (DAT2) on filtered CC0 photos and synthetic text (`training/configs/photo1.yml`) | Fine-tune: PixGamma; base model: Philip Hofmann (Phhofm / Helaman) | CC-BY-4.0 | Base: https://huggingface.co/Phips/4xBHI_dat2_real |
 | Text.mlpackage | PixGamma fine-tune of 4xNomosWebPhoto_RealPLKSR on synthetic Vietnamese/English text (`training/make_text_dataset.py`, `training/configs/text.yml`, then `text2.yml`, then `text3.yml`) | Fine-tune: PixGamma; base model: Philip Hofmann (Phhofm / Helaman) | CC-BY-4.0 | Base: https://github.com/Phhofm/models/releases/tag/4xNomosWebPhoto_RealPLKSR |
 | Photo2x.mlpackage | 2xNomosUni_span_multijpg_ldl | Philip Hofmann (Phhofm / Helaman) | CC-BY-4.0 | https://github.com/Phhofm/models/releases/tag/2xNomosUni_span_multijpg_ldl (https://openmodeldb.info/models/2x-NomosUni-span-multijpg-ldl) |
 
 Changes: converted from PyTorch to Core ML (FP16), wrapped to take/return 8-bit RGB images.
-PhotoV1.mlpackage (DAT2) is marked GPU-only; its window merge is rewritten for batch 1 (same math).
+TextV3.mlpackage (DAT2) is marked GPU-only; its window merge is rewritten for batch 1 (same math), and its last
+residual group is divided by 8 so FP16 does not overflow (the LayerNorm after it ignores scale).
 Until 0.2.0, Photo.mlpackage was 4xNomosWebPhoto_RealPLKSR (same author and license); the Text model is still a fine-tune of it.
 Photo v2 (Photo.mlpackage in 0.3.x) had PhotoV1's weights trained 15,000 more iterations with a light GAN; Photo v3 replaces it.
-PhotoV1.mlpackage has fine-tuned weights (15,000 iterations, Charbonnier + MS-SSIM + LDL + focal frequency + DISTS, no GAN).
+Photo v1 has fine-tuned weights (15,000 iterations, Charbonnier + MS-SSIM + LDL + focal frequency + DISTS, no GAN);
+Text v3 adds 10,000 iterations on text (Charbonnier + MS-SSIM + Sobel + LDL + focal frequency + gradient variance + line distiller, no GAN).
+Until this version, text regions used Photo v1 itself (PhotoV1.mlpackage).
 Text.mlpackage additionally has fine-tuned weights (8,000 + 12,000 + 8,000 iterations, Charbonnier + MS-SSIM + Sobel + LDL, then focal frequency + gradient variance + line distiller).
 License text: https://creativecommons.org/licenses/by/4.0/
 

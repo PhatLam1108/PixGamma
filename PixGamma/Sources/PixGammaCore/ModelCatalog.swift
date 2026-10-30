@@ -93,21 +93,22 @@ public enum ModelCatalog {
 
     public static let face = ModelSpec(file: "FaceRestore", scale: 1, tile: 512)
 
-    /// Text regions (run with the 8-way ensemble): PixGamma Photo v1 (PhotoV1, no GAN, so it never
-    /// invents strokes; Photo v1 still reads text best), which was trained with text
-    /// tiles and beats the Text model on the text benchmark (OCR 90.4 vs 89.2 %, PSNR 30.7 vs
-    /// 29.2 dB, sharpness 0.69 vs 0.58) and on real keyboards; then PixGamma's RealPLKSR Text model,
-    /// then RealESRNet. PIXGAMMA_TEXT_MODEL=<file> forces another 4x model (benchmarks).
+    /// Text regions (2-pass ensemble): PixGamma Text v3 (TextV3), Photo v1 trained further on dense
+    /// Vietnamese text with flips and turns (training/configs/text_v3.yml), no GAN so it never
+    /// invents strokes. Full pipeline on the text benchmark (8 sampling phases): OCR 92.4 vs 91.0 %
+    /// for Photo v1, marked letters 78.8 vs 76.6 %, PSNR 30.4 vs 30.1 dB, sharpness 0.75 vs 0.68.
+    /// Then Photo v1 (PhotoV1), PixGamma's RealPLKSR Text model, then RealESRNet.
+    /// PIXGAMMA_TEXT_MODEL=<file> forces another 4x model (benchmarks).
     public static var text: ModelSpec {
         let env = Env.get("TEXT_MODEL")
-        for f in [env, "PhotoV1", "Text"].compactMap({ $0 }) where ModelStore.shared.isAvailable(f) {
+        for f in [env, "TextV3", "PhotoV1", "Text"].compactMap({ $0 }) where ModelStore.shared.isAvailable(f) {
             return ModelSpec(file: f, scale: 4, tile: 256)
         }
         return networks(for: .fidelity)[0]
     }
 
     public static var allFiles: [String] {
-        ["Photo", "PhotoV1", "Photo2x", "Text", "Standard", "Standard2x", "HighFidelity", "ArtCGI", "LowRes", "FaceRealistic", "FaceRestore"]
+        ["Photo", "TextV3", "Photo2x", "Text", "Standard", "Standard2x", "HighFidelity", "ArtCGI", "LowRes", "FaceRealistic", "FaceRestore"]
     }
 }
 
